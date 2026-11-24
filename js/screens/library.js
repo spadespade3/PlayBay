@@ -8,9 +8,9 @@ const ALL = 'All';
 
 function chips(categories) {
   const list = [ALL, ...categories];
-  return list
-    .map((c) => `<button type="button" class="chip${c === 'All' ? ' is-active' : ''}" data-cat="${c}">${esc(c)}</button>`)
-    .join('');
+  return list.map((category) =>
+    `<button type="button" class="chip${category === ALL ? ' is-active' : ''}" data-cat="${esc(category)}" aria-pressed="${category === ALL}">${esc(category)}</button>`
+  ).join('');
 }
 
 export function mount(root) {
@@ -45,45 +45,36 @@ export function mount(root) {
   const count = root.querySelector('#libraryResultCount');
   const sections = root.querySelector('#librarySections');
 
-  const readyGrid = document.createElement('div');
-  readyGrid.className = 'game-grid';
-  mountGameCards(readyGrid, playableGames());
-  const lockedGrid = document.createElement('div');
-  lockedGrid.className = 'game-grid';
-  mountGameCards(lockedGrid, GAMES, { locked: true });
-
-  sections.innerHTML = `
-    <div class="lib-section">
-      <div class="lib-section__head">
-        <h2>Ready to play</h2>
-        <span class="rule"></span>
-      </div>
-      ${readyGrid.innerHTML}
-    </div>
-    <div class="lib-section">
-      <div class="lib-section__head">
-        <h2>In development</h2>
-        <span class="rule"></span>
-      </div>
-      ${lockedGrid.innerHTML}
-    </div>
-    <div class="lib-note">
-      <span data-icon="info"></span>
-      <span>Every game ships complete. In-development entries are real roadmap builds, not placeholders.</span>
-    </div>`;
+  const readySection = document.createElement('section');
+  readySection.className = 'lib-section';
+  readySection.innerHTML = '<div class="lib-section__head"><h2>Ready to play</h2><span class="rule"></span></div><div class="game-grid" data-library-grid="ready"></div>';
+  mountGameCards(readySection.querySelector('.game-grid'), playableGames());
+  const lockedSection = document.createElement('section');
+  lockedSection.className = 'lib-section';
+  lockedSection.innerHTML = '<div class="lib-section__head"><h2>In development</h2><span class="rule"></span></div><div class="game-grid" data-library-grid="locked"></div>';
+  mountGameCards(lockedSection.querySelector('.game-grid'), GAMES, { locked: true });
+  sections.replaceChildren(readySection, lockedSection);
+  const note = document.createElement('div');
+  note.className = 'lib-note';
+  note.innerHTML = '<span data-icon="info"></span><span>In-development entries are roadmap previews, not playable games yet.</span>';
+  sections.appendChild(note);
 
   const apply = () => {
-    const q = (root.querySelector('#librarySearch')?.value || '').trim().toLowerCase();
-    const grids = [readyGrid, lockedGrid];
+    const query = (root.querySelector('#librarySearch')?.value || '').trim().toLowerCase();
+    const category = chipsRow.querySelector('.chip.is-active')?.dataset.cat || ALL;
     let shown = 0;
-    for (const grid of grids) {
-      for (const card of grid.querySelectorAll('.game-card')) {
-        const text = card.textContent || '';
-        const match = !q || text.toLowerCase().includes(q);
-        card.style.display = match ? '' : 'none';
-        if (match) shown += 1;
-      }
-    }
+    root.querySelectorAll('#librarySections .game-card').forEach((card) => {
+      const text = (card.textContent || '').toLowerCase();
+      const categoryMatch = category === ALL || (card.dataset.category || '') === category;
+      const textMatch = !query || text.includes(query);
+      const visible = categoryMatch && textMatch;
+      card.hidden = !visible;
+      if (visible) shown += 1;
+    });
+    root.querySelectorAll('#librarySections .lib-section').forEach((section) => {
+      const hasVisibleCard = Array.from(section.querySelectorAll('.game-card')).some((card) => !card.hidden);
+      section.hidden = !hasVisibleCard;
+    });
     if (count) count.textContent = `${shown} game${shown === 1 ? '' : 's'} found`;
   };
 
@@ -91,8 +82,11 @@ export function mount(root) {
   const onChip = (event) => {
     const chip = event.target.closest('.chip');
     if (!chip) return;
-    chipsRow.querySelectorAll('.chip').forEach((c) => c.classList.remove('is-active'));
-    chip.classList.add('is-active');
+    chipsRow.querySelectorAll('.chip').forEach((item) => {
+      const active = item === chip;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
     apply();
   };
 
