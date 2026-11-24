@@ -42,7 +42,7 @@ export function mount(root, params = {}) {
         <div class="detail__art">
           <div class="detail__art-inner">${coverArt(id)}</div>
           <div class="detail__art-bar">
-            <span><span data-icon="monitor"></span>Local + LAN</span>
+            ${game?.available ? '<span><span data-icon="monitor"></span>Local + LAN</span>' : '<span><span data-icon="clock"></span>Development preview</span>'}
             <span><span data-icon="clock"></span>v${esc(game?.version || '1.0')} · updated ${esc(game?.updated || '2026-11-20')}</span>
           </div>
         </div>
@@ -55,22 +55,9 @@ export function mount(root, params = {}) {
           <h1 class="detail__title">${esc(game?.title || 'Game')}</h1>
           <p class="detail__desc">${esc(game?.description || game?.summary || '')}</p>
           ${modesMarkup ? `<div class="mode-list">${modesMarkup}</div>` : `<div class="detail__how"><h3>Modes</h3><p>This build is in development. The finished game ships with every mode below.</p></div>`}
-          <div class="detail__how">
-            <h3>Controls</h3>
-            <div class="control-line">
-              <span class="key-row"><span class="keycap">W</span><span class="keycap">S</span></span>
-              <span>Up / Down — move paddle</span>
-            </div>
-            <div class="control-line">
-              <span class="keycap keycap--wide">SPACE</span>
-              <span>Serve and restart</span>
-            </div>
-            <div class="control-line">
-              <span class="keycap">MOUSE</span>
-              <span>Pointer paddle · touch supported</span>
-            </div>
-            <p>Paddles return at up to sixty degrees off centre, so placement beats reaction. First to seven takes the set.</p>
-          </div>
+          ${game?.id === 'neon-pong' && game.available
+            ? '<div class="detail__how"><h3>Controls</h3><div class="control-line"><span class="key-row"><span class="keycap">W</span><span class="keycap">S</span></span><span>Move your paddle</span></div><div class="control-line"><span class="keycap">P / ESC</span><span>Pause or resume</span></div><div class="control-line"><span class="keycap">R</span><span>Restart match</span></div><div class="control-line"><span class="keycap">MOUSE</span><span>Hold and drag · touch supported</span></div><p>Gamepad D-pad or left stick is also supported. First to seven takes the set.</p></div>'
+            : '<div class="detail__how"><h3>Controls</h3><p>Controls and supported modes will be published when this game becomes playable.</p></div>'}
         </div>
       </div>
     </section>`;
