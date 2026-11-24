@@ -480,7 +480,11 @@ function handleMessage(client, message) {
         return;
       }
       const code = String(message.code || '').trim().toUpperCase();
-      if (!new RegExp('^[A-HJ-NP-Z2-9]{' + ROOM_CODE_LENGTH + '}
+      if (code.length !== ROOM_CODE_LENGTH || [...code].some((char) => !'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.includes(char))) {
+        client.error('Room code is invalid.');
+        return;
+      }
+      const room = rooms.get(code);
       if (!room) {
         client.error('Room not found. Check the code and try again.');
         return;
