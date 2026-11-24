@@ -163,14 +163,16 @@ class NetClient {
     switch (message.type) {
       case 'room': {
         this.room = {
-          code: message.code,
-          players: message.players || [],
+          code: String(message.code || ''),
+          players: Array.isArray(message.players) ? message.players : [],
           started: Boolean(message.started),
         };
         this.players = this.room.players;
         if (typeof message.host === 'boolean') this.role = message.host ? 'host' : 'guest';
-        if (message.playerId) this.playerId = message.playerId;
-        this.bus.emit('room', { ...this.room, role: this.role, playerId: this.playerId });
+        if (message.playerId) this.playerId = String(message.playerId);
+        const roomInfo = { ...this.room, role: this.role, playerId: this.playerId };
+        if (this.pending) this.pending.resolve(roomInfo);
+        this.bus.emit('room', roomInfo);
         break;
       }
       case 'players': {
@@ -182,9 +184,21 @@ class NetClient {
       case 'peer-joined':
         this.bus.emit('peer-joined', { name: message.name || 'Player' });
         break;
-      case 'peer-left':
-        this.bus.emit('peer-left', { reason: message.reason || 'guest' });
+      case 'peer-left': {
+        const reason = message.reason || 'guest';
+        if (reason === 'host' || reason === 'timeout') {
+          this.room = null;
+          this.role = null;
+          this.players = [];
+          this.playerId = null;
+        } else if (this.room) {
+          this.room.players = Array.isArray(message.players) ? message.players : [];
+          this.players = this.room.players;
+          this.room.started = false;
+        }
+        this.bus.emit('peer-left', { reason, players: this.players });
         break;
+      }
       case 'start':
         if (this.room) this.room.started = true;
         this.bus.emit('start', { code: message.code });
@@ -193,7 +207,11 @@ class NetClient {
         this.bus.emit('state', message.state);
         break;
       case 'input':
-        this.bus.emit('input', { y: Number(message.y) });
+        this.bus.emit('input', {
+          ...(Number.isFinite(Number(message.y)) ? { y: Number(message.y) } : {}),
+          ...(message.dir === -1 || message.dir === 0 || message.dir === 1 ? { dir: message.dir } : {}),
+          ...(Number.isFinite(Number(message.velocity)) ? { velocity: Number(message.velocity) } : {}),
+        });
         break;
       case 'event':
         this.bus.emit('event', message.name);
@@ -203,10 +221,7 @@ class NetClient {
         break;
       case 'error':
         this.bus.emit('error', message.message || 'The server rejected that.');
-        if (this.pending) {
-          this.pending.reject(new Error(message.message || 'server error'));
-          this.pending = null;
-        }
+        if (this.pending) this.pending.reject(new Error(message.message || 'server error'));
         break;
       case 'left':
         this.room = null;
@@ -223,55 +238,51 @@ class NetClient {
   }
 
   awaitRoom() {
+    if (this.pending) return Promise.reject(new Error('A room request is already in progress.'));
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error('The room request timed out.'));
-      }, 8000);
-      const offRoom = this.on('room', (room) => {
-        cleanup();
-        resolve(room);
-      });
-      const offError = this.on('error', (message) => {
-        cleanup();
-        reject(new Error(message));
-      });
       const cleanup = () => {
         clearTimeout(timer);
-        offRoom();
-        offError();
+        this.pending = null;
       };
+      const timer = setTimeout(() => {
+        if (this.pending) this.pending.reject(new Error('The room request timed out.'));
+      }, 8000);
       this.pending = {
-        reject: (err) => {
-          cleanup();
-          reject(err);
-        },
+        resolve: (room) => { cleanup(); resolve(room); },
+        reject: (error) => { cleanup(); reject(error instanceof Error ? error : new Error(String(error))); },
       };
     });
   }
 
-  async createRoom(name) {
+  async requestRoom(message) {
     await this.connect();
     const wait = this.awaitRoom();
-    const sent = this.send({ type: 'create', name });
-    if (!sent) throw new Error('Socket is not open.');
+    if (!this.send(message)) {
+      if (this.pending) this.pending.reject(new Error('Socket is not open.'));
+    }
     return wait;
   }
 
+  async createRoom(name) {
+    return this.requestRoom({ type: 'create', name });
+  }
+
   async joinRoom(code, name) {
-    await this.connect();
-    const wait = this.awaitRoom();
-    const sent = this.send({ type: 'join', code, name });
-    if (!sent) throw new Error('Socket is not open.');
-    return wait;
+    const normalized = String(code || '').trim().toUpperCase();
+    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(normalized)) throw new Error('Room codes must contain six valid characters.');
+    return this.requestRoom({ type: 'join', code: normalized, name });
   }
 
   startMatch() {
     return this.send({ type: 'start' });
   }
 
-  sendInput(y) {
-    return this.send({ type: 'input', y });
+  sendInput(y, options = {}) {
+    const message = { type: 'input' };
+    if (Number.isFinite(Number(y))) message.y = Number(y);
+    if (options && (options.dir === -1 || options.dir === 0 || options.dir === 1)) message.dir = options.dir;
+    if (options && Number.isFinite(Number(options.velocity))) message.velocity = Number(options.velocity);
+    return this.send(message);
   }
 
   sendState(state) {
@@ -283,6 +294,7 @@ class NetClient {
   }
 
   control(action) {
+    if (!['pause', 'resume', 'restart'].includes(action)) return false;
     return this.send({ type: 'control', action });
   }
 
@@ -295,6 +307,7 @@ class NetClient {
   }
 
   close() {
+    if (this.pending) this.pending.reject(new Error('Connection closed.'));
     this.leave();
     if (this.ws) {
       try {
