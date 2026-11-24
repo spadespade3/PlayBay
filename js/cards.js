@@ -25,6 +25,7 @@ export function gameCardMarkup(game, { locked = false, index = 0 } = {}) {
     <span class="game-card__cta" data-icon="${ctaIcon}" aria-hidden="true"></span>`;
 
   const classes = locked ? 'game-card is-locked' : 'game-card';
+  const category = esc(game.category || 'Arcade');
   const style = ` style="--i:${index}"`;
 
   const body = `
@@ -36,10 +37,10 @@ export function gameCardMarkup(game, { locked = false, index = 0 } = {}) {
     </div>`;
 
   if (locked) {
-    return `<div class="${classes}"${style}>${body}</div>`;
+    return `<div class="${classes}" data-category="${category}"${style}>${body}</div>`;
   }
 
-  return `<a class="${classes}" href="#/game/${game.id}"${style}>${body}</a>`;
+  return `<a class="${classes}" data-category="${category}" href="#/game/${game.id}"${style}>${body}</a>`;
 }
 
 export function mountGameCards(container, games, { locked = false, start = 0 } = {}) {
