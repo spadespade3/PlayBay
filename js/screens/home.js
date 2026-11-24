@@ -68,8 +68,24 @@ export function mount(root) {
     const current = root.querySelector('.ps-hero');
     const holder = document.createElement('div');
     holder.innerHTML = hero(selected, getStats());
-    if (current) current.replaceWith(holder.firstElementChild);
-    hydrateIcons(root);
+    const nextHero = holder.firstElementChild;
+    const update = () => {
+      if (current?.isConnected) current.replaceWith(nextHero);
+      else root.querySelector('.ps-dashboard')?.append(nextHero);
+      hydrateIcons(root);
+    };
+
+    // View Transitions crossfade the old and new featured artwork as one scene.
+    // The CSS animation remains the fallback for browsers without this API.
+    if (current && typeof document.startViewTransition === 'function') {
+      try {
+        document.startViewTransition(update);
+      } catch {
+        update();
+      }
+    } else {
+      update();
+    }
   };
   const renderTiles = (restoreFocus = false) => {
     const tiles = [...root.querySelectorAll('[data-select-game]')];
