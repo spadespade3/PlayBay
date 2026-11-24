@@ -152,3 +152,12 @@ body.playbay-console{overflow-x:hidden}
 @media(max-width:760px){.playbay-console .settings-page>.settings{grid-template-columns:1fr}.playbay-console .settings-page .panel--wide{grid-column:auto}}
 @media(max-width:620px){.playbay-console .view>.screen.settings{min-height:calc(100vh - 60px);padding:20px 12px 32px}.playbay-console .settings-page>.page-head{margin-bottom:18px}.playbay-console .settings-page .setting-row{align-items:flex-start;flex-direction:column}.playbay-console .settings-page .setting-row__control{width:100%}.playbay-console .settings-page .toggle{width:100%;justify-content:space-between}}
 @media(prefers-reduced-motion:reduce){.ps-hero,.ps-hero__content,.ps-hero__backdrop,.ps-hero__ambient span{animation:none!important}.ps-game-carousel__items{scroll-behavior:auto}.ps-game-tile{transition:none!important;transform:none!important}}
+
+/* Make the CRT preference visible in the console shell; disable it cleanly when off. */
+.playbay-console .bg:after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.13;
+  background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(255,255,255,.22) 2px 3px);
+  mix-blend-mode:screen;
+}
+html[data-crt='off'] .playbay-console .bg:after{display:none}
+.playbay-console .game-card[hidden],.playbay-console .lib-section[hidden]{display:none!important}
