@@ -270,7 +270,7 @@ export function mount(root, params = {}) {
   };
 
   const onKeyDown = (event) => {
-    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
     if (event.code === 'KeyP' || event.code === 'Escape' || event.code === 'Space') {
       event.preventDefault();
       if (!event.repeat) firePause();
@@ -375,8 +375,10 @@ export function mount(root, params = {}) {
     }
   };
 
-  root.addEventListener('keydown', onKeyDown);
-  root.addEventListener('keyup', onKeyUp);
+  // Listen at window capture level: keyboard events often target <body> when the
+  // game canvas itself is not focusable. This also prevents arrow-key page scroll.
+  window.addEventListener('keydown', onKeyDown, { capture: true, passive: false });
+  window.addEventListener('keyup', onKeyUp, true);
   window.addEventListener('blur', onWindowBlur);
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
@@ -438,8 +440,8 @@ export function mount(root, params = {}) {
     ro.disconnect();
     pressedKeys.clear();
     if (pointerDragging) onPointerUp({ pointerId });
-    root.removeEventListener('keydown', onKeyDown);
-    root.removeEventListener('keyup', onKeyUp);
+    window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('blur', onWindowBlur);
     canvas.removeEventListener('pointerdown', onPointerDown);
     canvas.removeEventListener('pointermove', onPointerMove);
