@@ -403,7 +403,7 @@ export function mount(root, params = {}) {
         gameId,
         mode,
         result: isWin ? 'win' : 'loss',
-        score: isWin ? engine.scores[playerSide] : engine.scores[1 - playerSide],
+        score: engine.scores[playerSide],
         rally: engine.maxRally || 0,
         seconds: engine.elapsed || 0,
       });
