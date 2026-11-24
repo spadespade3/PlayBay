@@ -26,6 +26,9 @@ let gamepadFrame = 0;
 let gamepadLastDirection = 0;
 let gamepadNextMoveAt = 0;
 let booted = false;
+let routeStack = [];
+let lastRouteHash = window.location.hash || '#/home';
+let ignoreNextHistoryPush = false;
 
 function parseHash() {
   const raw = window.location.hash.replace(/^#/, '') || '/home';
@@ -124,8 +127,20 @@ function navigateTo(hash) {
   window.location.hash = next;
 }
 
+function navigateBack() {
+  const previous = routeStack.pop();
+  if (previous) {
+    ignoreNextHistoryPush = true;
+    window.location.hash = previous;
+    return;
+  }
+  const path = parseHash().parts[0] || 'home';
+  const fallback = path === 'game' ? '#/discover' : path === 'multiplayer' ? '#/friends' : '#/home';
+  if (window.location.hash !== fallback) navigateTo(fallback);
+}
+
 function setActiveNav(path) {
-  const key = ['game', 'play', ''].includes(path) ? 'home' : path;
+  const key = path === 'game' ? 'discover' : path === 'play' ? 'home' : path === 'multiplayer' ? 'friends' : (path || 'home');
   document.querySelectorAll('[data-nav-link]').forEach((el) => {
     const href = el.getAttribute('href') || '#/home';
     const target = href.replace(/^#\//, '').split('?')[0] || 'home';
@@ -164,6 +179,11 @@ function moveFocus(direction) {
 function onViewKeyDown(event) {
   if (event.defaultPrevented || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
   if (view.querySelector('.player')) return;
+  if (event.key === 'Escape' && !document.querySelector('#modalRoot dialog[open]')) {
+    event.preventDefault();
+    navigateBack();
+    return;
+  }
   if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault();
     moveFocus(({ ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' })[event.key]);
@@ -192,7 +212,7 @@ function startGamepadNav() {
       gamepadLastDirection = direction;
       if (gamepad.buttons?.[0]?.pressed && !gamepadLastA) document.activeElement?.click?.();
       if (gamepad.buttons?.[1]?.pressed && !gamepadLastB) {
-        if (window.location.hash !== '#/home') navigateTo('#/home');
+        if (window.location.hash !== '#/home') navigateBack();
       }
       gamepadLastA = Boolean(gamepad.buttons?.[0]?.pressed);
       gamepadLastB = Boolean(gamepad.buttons?.[1]?.pressed);
@@ -230,6 +250,10 @@ function boot() {
   booted = true;
   bindGlobalWiring();
   window.addEventListener('hashchange', () => {
+    const currentHash = window.location.hash || '#/home';
+    if (ignoreNextHistoryPush) ignoreNextHistoryPush = false;
+    else if (lastRouteHash !== currentHash) routeStack.push(lastRouteHash);
+    lastRouteHash = currentHash;
     const { parts } = parseHash();
     setActiveNav(parts[0] || 'home');
     renderRoute();
