@@ -1,5 +1,5 @@
 /* PlayBay · app shell, hash router, global wiring */
-import { subscribe, initials } from './store.js';
+import { subscribe, initials, getSettings } from './store.js';
 import { findGame } from './catalog.js';
 import { net } from './net.js';
 import { audio } from './audio.js';
@@ -75,7 +75,7 @@ function renderRoute() {
     : `#/${route.name}`;
 
   if (window.location.hash !== desiredHash && (route.name === 'home' && parts[0] && !['home', ''].includes(parts[0]))) {
-    window.location.replace(window.location.pathname + window.location.search + desiredHash);
+    window.location.hash = desiredHash;
     return;
   }
 
@@ -143,9 +143,9 @@ function moveFocus(delta) {
 function onViewKeyDown(event) {
   if (event.defaultPrevented || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
   if (view.querySelector('.player')) return;
-  if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+  if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault();
-    moveFocus(event.key === 'ArrowDown' ? 1 : -1);
+    moveFocus(event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
   }
 }
 
@@ -162,11 +162,10 @@ function startGamepadNav() {
       const justPressed = direction && direction !== gamepadLastDirection;
       const repeat = direction && direction === gamepadLastDirection && now >= gamepadNextMoveAt;
       if (justPressed || repeat) {
-        const items = focusables();
-        if (items.length) {
-          if (Math.abs(direction) === 2) moveFocus(direction > 0 ? 1 : -1);
-          else moveFocus(direction > 0 ? 1 : -1);
-        }
+        const key = direction === -1 ? 'ArrowLeft'
+          : direction === 1 ? 'ArrowRight'
+          : direction === -2 ? 'ArrowUp' : 'ArrowDown';
+        view.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
         gamepadNextMoveAt = now + 210;
       }
       gamepadLastDirection = direction;
@@ -216,6 +215,9 @@ function boot() {
   });
   const { parts } = parseHash();
   setActiveNav(parts[0] || 'home');
+  const currentSettings = getSettings();
+  if (profileAvatar) profileAvatar.textContent = initials(currentSettings.name);
+  if (profileName) profileName.textContent = currentSettings.name;
   renderRoute();
   startGamepadNav();
 }
