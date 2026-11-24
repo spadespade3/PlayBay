@@ -119,6 +119,7 @@ function moveFocus(delta) {
 }
 
 function onViewKeyDown(event) {
+  if (event.defaultPrevented) return;
   const key = event.key;
   if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'ArrowLeft' || key === 'ArrowRight') {
     event.preventDefault();
