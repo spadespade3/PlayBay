@@ -518,3 +518,24 @@ html,body{background:#101114;color:#f3f4f6}
 @media(max-width:900px){.topbar{gap:12px;padding-inline:16px}.brand__word{display:none}.mainnav{gap:0}.navlink{padding:9px 10px}.ps-profile .profile__name,.ps-clock{display:none}.pb-discover-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.topbar{height:auto;min-height:68px;flex-wrap:wrap;justify-content:space-between;padding-block:10px}.mainnav{order:3;width:100%;justify-content:space-between;padding:4px 0 0}.navlink{flex:1;text-align:center;padding:10px 5px;font-size:12px}.navlink.is-active:after{left:25%;right:25%}.ps-topbar__right{gap:7px}.view{padding:24px 14px 50px}.pb-feature-strip,.pb-friends-hero{grid-template-columns:1fr}.pb-feature-strip__art{min-height:170px;max-height:210px}.pb-friends-hero{gap:20px}.pb-friends-hero__icon{width:76px;height:76px;border-radius:19px}.pb-friends-hero__icon svg{width:34px;height:34px}.pb-discover-grid,.pb-friends-info-grid{grid-template-columns:1fr}.pb-discover-card__art{width:36%;min-height:115px}.pb-page{gap:22px}}
 @media(prefers-reduced-motion:reduce){.pb-discover-card,.pb-primary-action{transition:none}}
+
+/* Hybrid home + settings surfaces */
+.playbay-console .ps-dashboard{background:transparent}
+.playbay-console .ps-game-carousel{padding-inline:clamp(18px,3vw,44px);background:transparent}
+.playbay-console .ps-game-tile{border-radius:13px;box-shadow:0 7px 18px rgba(0,0,0,.28)}
+.playbay-console .ps-game-tile__art,.playbay-console .ps-game-tile__art svg{border-radius:12px}
+.playbay-console .ps-game-tile.is-selected{border-color:#fff;box-shadow:0 0 0 2px rgba(237,70,84,.65),0 10px 25px rgba(0,0,0,.35)}
+.playbay-console .ps-game-tile.is-selected:after{border-radius:16px}
+.playbay-console .ps-hero{border-radius:0 0 20px 20px;min-height:clamp(390px,48vw,560px)}
+.playbay-console .ps-hero__copy h1,.playbay-console .ps-hero__title{letter-spacing:-.045em}
+.playbay-console .ps-activity-card,.playbay-console .ps-continue-card{background:#1a1d22;border:1px solid rgba(255,255,255,.08);border-radius:15px;box-shadow:var(--shadow-1);backdrop-filter:none}
+.playbay-console .ps-activity-card{padding:22px}
+.playbay-console .ps-continue-card:hover,.playbay-console .ps-activity-card:hover{border-color:rgba(237,70,84,.35);transform:translateY(-2px)}
+.playbay-console .settings-page .panel{background:#1a1d22!important;color:#f3f4f6!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:var(--shadow-1)!important;border-radius:15px!important}
+.playbay-console .settings-page .panel__head{border-bottom:1px solid rgba(255,255,255,.09)}
+.playbay-console .settings-page .panel__title,.playbay-console .settings-page .setting-row__title{color:#f3f4f6!important}
+.playbay-console .settings-page .setting-row__desc,.playbay-console .settings-page .field__hint,.playbay-console .settings-page .name-preview__hint{color:#9da3ad!important}
+.playbay-console .settings-page .input,.playbay-console .settings-page input:not([type=checkbox]){background:#111318!important;color:#f3f4f6!important;border:1px solid rgba(255,255,255,.13)!important}
+.playbay-console .settings-page .name-preview{background:#20242b!important;border:1px solid rgba(255,255,255,.1)!important}
+.playbay-console .settings-page .setting-row,.playbay-console .settings-page .volume-row{border-color:rgba(255,255,255,.08)!important}
+@media(max-width:720px){.playbay-console .ps-hero{border-radius:0 0 15px 15px}}
