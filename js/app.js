@@ -10,6 +10,8 @@ import { mount as mountDetails } from './screens/details.js';
 import { mount as mountSettings } from './screens/settings.js';
 import { mount as mountMultiplayer } from './screens/multiplayer.js';
 import { mount as mountPlayer } from './screens/player.js';
+import { mount as mountDiscover } from './screens/discover.js';
+import { mount as mountFriends } from './screens/friends.js';
 
 const ALLOWED_MODES = new Set(['cpu', 'local', 'host', 'guest']);
 const view = document.getElementById('view');
@@ -36,6 +38,8 @@ function parseHash() {
 function resolve(parts, query) {
   const section = parts[0] || 'home';
   if (section === 'library') return { name: 'library' };
+  if (section === 'discover') return { name: 'discover' };
+  if (section === 'friends') return { name: 'friends' };
   if (section === 'settings') return { name: 'settings' };
   if (section === 'multiplayer') return { name: 'multiplayer' };
   if (section === 'game') {
@@ -97,6 +101,8 @@ function renderRoute() {
         cleanup = mountHome(screen);
         currentHomeStatsCleanup = onStatsChanged(() => refreshHome(screen));
       } else if (route.name === 'library') cleanup = mountLibrary(screen);
+      else if (route.name === 'discover') cleanup = mountDiscover(screen);
+      else if (route.name === 'friends') cleanup = mountFriends(screen);
       else if (route.name === 'details') cleanup = mountDetails(screen, { id: route.id });
       else if (route.name === 'settings') cleanup = mountSettings(screen);
       else if (route.name === 'multiplayer') {
@@ -132,12 +138,27 @@ function focusables() {
     .filter((el) => el.offsetParent !== null);
 }
 
-function moveFocus(delta) {
+function moveFocus(direction) {
   const items = focusables();
   if (!items.length) return;
-  let index = items.indexOf(document.activeElement);
-  if (index < 0) index = 0;
-  items[(index + delta + items.length) % items.length]?.focus();
+  const current = document.activeElement;
+  if (!items.includes(current)) { items[0]?.focus(); return; }
+  const a = current.getBoundingClientRect();
+  const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  const vectors = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+  const [dx, dy] = vectors[direction];
+  let best = null, bestScore = Infinity;
+  for (const item of items) {
+    if (item === current) continue;
+    const r = item.getBoundingClientRect();
+    const vx = r.left + r.width / 2 - ax, vy = r.top + r.height / 2 - ay;
+    const primary = vx * dx + vy * dy;
+    if (primary <= 2) continue;
+    const cross = Math.abs(vx * dy - vy * dx);
+    const score = primary + cross * 2.25 + cross * cross / Math.max(primary, 1);
+    if (score < bestScore) { best = item; bestScore = score; }
+  }
+  if (best) best.focus();
 }
 
 function onViewKeyDown(event) {
@@ -145,7 +166,7 @@ function onViewKeyDown(event) {
   if (view.querySelector('.player')) return;
   if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault();
-    moveFocus(event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1);
+    moveFocus(({ ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' })[event.key]);
   }
 }
 
