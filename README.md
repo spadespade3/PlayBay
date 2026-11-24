@@ -1,28 +1,40 @@
 # PlayBay
 
-PlayBay is a local-multiplayer neon arcade platform. One finished game ships today: **Neon Pong** - host-authoritative, room-based multiplayer over WebSockets, with a CPU opponent, local two-player, and LAN play from any browser on the same network.
+PlayBay is a local-multiplayer arcade platform with a console-style interface. The current playable game is **Neon Pong**, with CPU, local two-player and LAN modes.
 
-## Run
+## Run locally
+
+Requires Node.js 18 or newer.
 
 ```sh
 node server.js
 ```
 
-- Local: http://localhost:3000
-- LAN: http://<your-ip>:3000 (the server prints it on boot)
+Open the address printed by the server, normally:
 
-Requires Node.js >= 18. No dependencies - `npm install` is not needed.
+- This computer: http://localhost:3000
+- Another device on the same Wi-Fi: http://<host-ip>:3000
 
-> Do not open `index.html` via `file://`. The app is an ES-module SPA and requires the HTTP server.
+Do not open `index.html` via `file://`. The app uses ES modules and the LAN server also provides the WebSocket room relay.
 
-## Controls (Neon Pong)
+## Controls — Neon Pong
 
-- P1: `W` / `S`
-- P2: `Up` / `Down` (local mode)
-- Pause: `P` or `Esc`
+- Single player / host: `W` / `S` or `↑` / `↓`
+- Local two-player: Player 1 uses `W` / `S`; Player 2 uses `↑` / `↓`
+- Guest: `W` / `S` or `↑` / `↓`
+- Pause / resume: `P`, `Escape` or `Space`
 - Restart: `R`
-- Touch: drag on the playfield
-- Gamepad: D-pad / left stick, A to start/restart, Start to pause
+- Mouse / touch: hold and drag on the playfield
+- Gamepad: first connected controller's D-pad or left stick
+
+The ball launches automatically after the countdown. Paddle movement contributes to the ball's speed and direction on contact.
+
+## LAN safety notes
+
+- Room codes are six characters; repeated joins from one IP are rate-limited.
+- The server accepts browser WebSocket connections only when the page origin matches the server host.
+- The static server exposes only `index.html`, `css/`, `js/` and `kenney_ui-pack/`; repository metadata and configuration files are not served.
+- This is a same-network party-game relay, not an internet-facing service. The current server uses plain HTTP/WebSocket without TLS or user accounts. Do not forward its port to the public internet or use it on an untrusted network.
 
 ## Screens
 
@@ -30,22 +42,26 @@ Home · Game Library · Game Details · Game Player · Settings · Multiplayer
 
 ## Architecture
 
-- `server.js` - zero-dependency static host + minimal RFC 6455 WebSocket room relay
-- `js/app.js` - app shell, hash router, global wiring (gamepad nav, audio)
-- `js/screens/` - one module per screen
-- `js/games/pong.js` - `PongEngine` (playfield, physics, AI, net sync) - pure logic, no DOM
-- `js/net.js` - WebSocket client for rooms / host-authoritative state relay
-- `js/store.js` - settings + stats (localStorage)
-- `js/audio.js` - synth + Kenney UI sound playback
-- `js/ui.js` - icon set, confetti, helpers
-- `js/catalog.js` - game catalog (only Neon Pong is playable)
+- `server.js` — static asset host and WebSocket room relay
+- `js/app.js` — route lifecycle, screen cleanup and global input
+- `js/screens/` — one module per screen
+- `js/games/pong.js` — simulation, physics, AI, rendering and snapshot validation
+- `js/net.js` — WebSocket client and room state
+- `js/store.js` — validated settings and local stats
+- `js/audio.js` — WebAudio synth and Kenney UI sound playback
+- `js/catalog.js` — game catalog
 
-Multiplayer: host creates a room and gets a code; guest joins by code. Host runs the simulation (~30 Hz state snapshots); guest sends paddle position and interpolates.
+The LAN host owns the simulation. The guest sends paddle input; the host relays validated snapshots at approximately 30 updates per second.
 
-## Assets
+## Development checks
 
-UI sounds and fonts from the [Kenney UI Pack](https://kenney.nl/assets/ui-pack) (CC0). Cover art and icons are original inline SVG/CSS.
+```sh
+npm run check
+npm test
+```
 
-## License
+The checks syntax-validate the application modules and run regression tests for Pong physics, snapshot validation, static-file exposure, WebSocket origin checks and LAN room creation/joining.
 
-MIT
+## Assets and licensing
+
+The Kenney UI Pack audio and fonts are CC0; see `kenney_ui-pack/License.txt`. PlayBay's source code is distributed under the MIT License in `LICENSE`.
