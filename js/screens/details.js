@@ -52,7 +52,7 @@ export function mount(root, params = {}) {
             <span class="badge">${esc(game?.players || '1-2')} players</span>
             ${game?.available ? `<span class="badge badge--lime">Playable</span>` : `<span class="badge badge--amber">In development</span>`}
           </div>
-          <h1 class="detail__title">Neon <span>Pong</span></h1>
+          <h1 class="detail__title">${esc(game?.title || 'Game')}</h1>
           <p class="detail__desc">${esc(game?.description || game?.summary || '')}</p>
           ${modesMarkup ? `<div class="mode-list">${modesMarkup}</div>` : `<div class="detail__how"><h3>Modes</h3><p>This build is in development. The finished game ships with every mode below.</p></div>`}
           <div class="detail__how">
