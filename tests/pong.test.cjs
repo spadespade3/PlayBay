@@ -20,6 +20,16 @@ test('a valid engine snapshot is accepted', () => {
   assert.equal(engine.applySnapshot(engine.snapshot()), true);
 });
 
+test('maximum rally history is carried in multiplayer snapshots', () => {
+  const host = new PongEngine({ mode: 'cpu' });
+  host.rally = 4;
+  host.maxRally = 12;
+  const guest = new PongEngine({ mode: 'guest' });
+  assert.equal(guest.applySnapshot(host.snapshot()), true);
+  assert.equal(guest.rally, 4);
+  assert.equal(guest.maxRally, 12);
+});
+
 test('malformed snapshots are rejected without changing the score', () => {
   const engine = new PongEngine({ mode: 'guest' });
   engine.scores = [3, 2];
