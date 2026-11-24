@@ -1,20 +1,126 @@
-/* PlayBay · Console-style home */
+/* PlayBay · console dashboard */
 import { getStats, getTotals, subscribe } from '../store.js';
-import { playableGames, findGame, coverArt } from '../catalog.js';
+import { GAMES, findGame, coverArt } from '../catalog.js';
 import { hydrateIcons } from '../ui.js';
-function stat(label,value){return `<div class="console-stat"><span>${label}</span><strong>${value}</strong></div>`;}
-function gameTile(game){return `<a class="game-tile ${game.available?'':'is-locked'}" href="#/game/${game.id}"><div class="game-tile__art">${coverArt(game.id)}</div><div class="game-tile__shade"></div><div class="game-tile__meta"><i></i>${game.available?'PLAY NOW':'IN DEVELOPMENT'}</div><div class="game-tile__title">${game.title}</div><div class="game-tile__sub">${game.category} · ${game.players} PLAYERS</div></a>`;}
-function continueCard(stats){const game=findGame(stats.lastGame)||findGame('neon-pong');return `<a class="continue-tile" href="#/play/${game.id}?mode=${stats.lastMode||'cpu'}"><div class="continue-tile__art">${coverArt(game.id)}</div><div class="continue-tile__copy"><span class="console-kicker">PICK UP WHERE YOU LEFT OFF</span><strong>${game.title}</strong><small>${stats.lastGame?'LAST MODE · '+(stats.lastMode||'CPU'):'YOUR FIRST MATCH IS WAITING'}</small></div><span class="continue-tile__arrow">↗</span></a>`;}
-export function mount(root){
- const totals=getTotals(),stats=getStats(),games=['neon-pong','hyper-drift','block-storm','orbit-arena','pixel-panic','bass-bounce'].map(findGame).filter(Boolean),featured=playableGames()[0]||findGame('neon-pong');
- root.innerHTML=`<section class="screen console-home">
- <div class="console-welcome"><div><span class="console-kicker"><i></i> YOUR LOCAL ARCADE</span><h1>GOOD TO SEE YOU<span>.</span></h1><p>Pick a game. Grab a phone. Make a night of it.</p></div><div class="console-online"><span></span> LOCAL SYSTEM READY</div></div>
- <section class="console-feature"><div class="console-feature__art">${coverArt(featured.id)}</div><div class="console-feature__overlay"></div><div class="console-feature__content"><span class="console-kicker console-kicker--light"><i></i> FEATURED GAME · AVAILABLE NOW</span><h2>NEON<br><b>PONG</b></h2><p>One ball. Two paddles. No mercy.<br>Challenge the CPU or bring someone into the match.</p><div class="console-feature__actions"><a class="console-button" href="#/play/neon-pong?mode=cpu">▶ PLAY NOW</a><a class="console-button console-button--outline" href="#/multiplayer">＋ HOST A ROOM</a></div></div><div class="console-feature__index">01 <span>/ 06</span></div></section>
- <section class="console-shelf"><div class="console-section-head"><div><span class="console-kicker">THE COLLECTION</span><h2>YOUR GAMES</h2></div><a href="#/library">VIEW LIBRARY <span>↗</span></a></div><div class="console-game-row">${games.map(gameTile).join('')}</div></section>
- <section class="console-lower"><div class="console-continue">${continueCard(stats)}</div><div class="console-stats"><div class="console-stats__head"><span class="console-kicker">PLAYER RECORD</span><span class="console-pixel-mark">PB_01</span></div><div class="console-stats__grid">${stat('MATCHES',totals.plays)}${stat('WINS',totals.wins)}${stat('WIN RATE',Math.round(totals.winRate*100)+'%')}${stat('BEST RALLY',totals.bestRally)}</div></div></section>
- <section class="console-party"><div class="console-party__mark">2P</div><div><span class="console-kicker">BETTER TOGETHER</span><h2>YOUR COUCH IS THE ARENA.</h2><p>Host a room on your Wi-Fi and let everyone join from their phone.</p></div><a class="console-button console-button--dark" href="#/multiplayer">SET UP MULTIPLAYER ↗</a></section>
- </section>`;
- hydrateIcons(root);return ()=>{};
+
+const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const icon = (name) => `<span data-icon="${name}" aria-hidden="true"></span>`;
+
+function gameTile(game, selected) {
+  return `<button class="ps-game-tile ${selected ? 'is-selected' : ''}" type="button" data-select-game="${safe(game.id)}" aria-pressed="${selected}" aria-label="Select ${safe(game.title)}">
+    <span class="ps-game-tile__art">${coverArt(game.id)}</span>
+    <span class="ps-game-tile__selected-mark">${icon('check')}</span>
+  </button>`;
 }
-export function refreshHome(root){const totals=getTotals(),stats=getStats(),c=root.querySelector('.console-continue'),s=root.querySelector('.console-stats__grid');if(c)c.innerHTML=continueCard(stats);if(s)s.innerHTML=[stat('MATCHES',totals.plays),stat('WINS',totals.wins),stat('WIN RATE',Math.round(totals.winRate*100)+'%'),stat('BEST RALLY',totals.bestRally)].join('');}
-export function onStatsChanged(refresh){return subscribe(event=>{if(event&&event.type==='stats')refresh();});}
+
+function hero(game, stats) {
+  const available = game.available;
+  const lastPlayed = stats.lastGame === game.id;
+  const activity = lastPlayed ? `Last played · ${safe((stats.lastMode || 'cpu').toUpperCase())}` : (available ? game.tagline : 'In development · Preview the game');
+  const action = available
+    ? `<a class="ps-primary-action" href="#/play/${safe(game.id)}?mode=cpu">${icon('play')}<span>PLAY GAME</span></a>`
+    : `<a class="ps-primary-action" href="#/game/${safe(game.id)}">${icon('info')}<span>VIEW DETAILS</span></a>`;
+  return `<section class="ps-hero" data-featured="${safe(game.id)}" aria-label="Selected game">
+    <div class="ps-hero__backdrop">${coverArt(game.id)}</div>
+    <div class="ps-hero__scrim"></div>
+    <div class="ps-hero__ambient" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="ps-hero__content">
+      <div class="ps-hero__eyebrow"><span class="ps-status-dot"></span>${available ? 'READY TO PLAY' : 'COMING SOON'} <i></i> ${safe(game.category)} <i></i> ${safe(game.players)} PLAYERS</div>
+      <h1 class="ps-hero__title">${safe(game.title)}</h1>
+      <p class="ps-hero__tagline">${safe(game.tagline)}</p>
+      <p class="ps-hero__activity">${safe(activity)}</p>
+      <div class="ps-hero__actions">${action}<a class="ps-secondary-action" href="#/game/${safe(game.id)}">GAME DETAILS</a><a class="ps-more-action" href="#/game/${safe(game.id)}" aria-label="More options">···</a></div>
+    </div>
+    <div class="ps-hero__side-note"><span>PLAYBAY ORIGINALS</span><strong>01</strong><small>/ ${String(GAMES.length).padStart(2,'0')}</small></div>
+  </section>`;
+}
+
+function activityCards(totals, stats) {
+  const rate = totals.plays ? Math.round(totals.winRate * 100) : 0;
+  return `<section class="ps-activity-grid" aria-label="Player activity">
+    <article class="ps-activity-card ps-record-card">
+      <div class="ps-activity-card__head"><div><span class="ps-overline">YOUR ARCADE RECORD</span><h2>Player stats</h2></div><span class="ps-card-mark">PB / 01</span></div>
+      <div class="ps-record-grid">
+        <div class="ps-record-stat"><span class="ps-record-icon">✦</span><strong>${totals.plays}</strong><small>MATCHES</small></div>
+        <div class="ps-record-stat"><span class="ps-record-icon">◆</span><strong>${totals.wins}</strong><small>WINS</small></div>
+        <div class="ps-record-stat"><span class="ps-record-icon">◉</span><strong>${rate}%</strong><small>WIN RATE</small></div>
+        <div class="ps-record-stat"><span class="ps-record-icon">↗</span><strong>${totals.bestRally}</strong><small>BEST RALLY</small></div>
+      </div>
+    </article>
+    <article class="ps-activity-card ps-friends-card">
+      <div class="ps-activity-card__head"><div><span class="ps-overline">LOCAL MULTIPLAYER</span><h2>Friends who play</h2></div><span class="ps-friends-symbol">${icon('users')}</span></div>
+      <p>Turn another phone into a controller, or bring another player onto your network.</p>
+      <a href="#/multiplayer" class="ps-text-link">SET UP A ROOM <span>↗</span></a>
+    </article>
+    <a class="ps-continue-card" href="#/play/${safe(findGame(stats.lastGame)?.id || 'neon-pong')}?mode=${safe(stats.lastMode || 'cpu')}">
+      <span class="ps-continue-card__art">${coverArt(findGame(stats.lastGame)?.id || 'neon-pong')}</span>
+      <span class="ps-continue-card__copy"><span class="ps-overline">CONTINUE PLAYING</span><strong>${safe(findGame(stats.lastGame)?.title || 'Neon Pong')}</strong><small>${stats.lastGame ? 'PICK UP WHERE YOU LEFT OFF' : 'YOUR FIRST MATCH IS WAITING'}</small></span>
+      <span class="ps-continue-card__arrow">↗</span>
+    </a>
+  </section>`;
+}
+
+export function mount(root) {
+  let selected = findGame('neon-pong') || GAMES[0];
+  const stats = getStats();
+  const renderHero = () => {
+    const current = root.querySelector('.ps-hero');
+    const holder = document.createElement('div');
+    holder.innerHTML = hero(selected, getStats());
+    if (current) current.replaceWith(holder.firstElementChild);
+  };
+  const renderTiles = () => {
+    const row = root.querySelector('.ps-game-carousel__items');
+    if (row) row.innerHTML = GAMES.map(game => gameTile(game, game.id === selected.id)).join('') +
+      `<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid-3x3')}</span><small>GAME LIBRARY</small></a>`;
+    hydrateIcons(root);
+  };
+  root.innerHTML = `<section class="ps-dashboard">
+    <section class="ps-game-carousel" aria-label="Your games">
+      <div class="ps-game-carousel__items">${GAMES.map(game => gameTile(game, game.id === selected.id)).join('')}<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid-3x3')}</span><small>GAME LIBRARY</small></a></div>
+      <div class="ps-carousel-hint"><span>←</span> SELECT A GAME <span>→</span></div>
+    </section>
+    ${hero(selected, stats)}
+    ${activityCards(getTotals(), stats)}
+  </section>`;
+  const onClick = event => {
+    const tile = event.target.closest('[data-select-game]');
+    if (!tile) return;
+    const next = findGame(tile.dataset.selectGame);
+    if (!next || next.id === selected.id) return;
+    selected = next;
+    renderTiles();
+    renderHero();
+  };
+  const onKey = event => {
+    if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    if (event.target.closest('a,button')) {
+      const tiles = [...root.querySelectorAll('[data-select-game]')];
+      const index = tiles.indexOf(event.target.closest('[data-select-game]'));
+      if (index < 0) return;
+      event.preventDefault();
+      const next = tiles[Math.max(0, Math.min(tiles.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)))];
+      next?.focus();
+      next?.click();
+    }
+  };
+  root.addEventListener('click', onClick);
+  root.addEventListener('keydown', onKey);
+  hydrateIcons(root);
+  return () => {
+    root.removeEventListener('click', onClick);
+    root.removeEventListener('keydown', onKey);
+  };
+}
+
+export function refreshHome(root) {
+  const current = root.querySelector('.ps-hero');
+  if (!current) return;
+  const stats = getStats();
+  const totals = getTotals();
+  const section = root.querySelector('.ps-activity-grid');
+  if (section) section.outerHTML = activityCards(totals, stats);
+}
+export function onStatsChanged(refresh) {
+  return subscribe(event => { if (event && event.type === 'stats') refresh(); });
+}
