@@ -71,13 +71,17 @@ export function mount(root) {
     hydrateIcons(root);
   };
   const renderTiles = (restoreFocus = false) => {
-    const row = root.querySelector('.ps-game-carousel__items');
-    if (row) row.innerHTML = GAMES.map(game => gameTile(game, game.id === selected.id)).join('') +
-      `<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid')}</span><small>GAME LIBRARY</small></a>`;
+    const tiles = [...root.querySelectorAll('[data-select-game]')];
+    tiles.forEach(tile => {
+      const active = tile.dataset.selectGame === selected.id;
+      tile.classList.toggle('is-selected', active);
+      tile.setAttribute('aria-pressed', String(active));
+    });
     const caption = root.querySelector('.ps-game-carousel__caption');
     if (caption) caption.innerHTML = `<span class="ps-platform-mark">PB</span><strong>${safe(selected.title)}</strong><small>${selected.available ? 'READY TO PLAY' : 'IN DEVELOPMENT'}</small>`;
-    hydrateIcons(root);
-    if (restoreFocus) root.querySelector(`[data-select-game="${selected.id}"]`)?.focus();
+    const activeTile = root.querySelector(`[data-select-game="${selected.id}"]`);
+    activeTile?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
+    if (restoreFocus || !root.contains(document.activeElement)) activeTile?.focus({ preventScroll: true });
   };
   const selectGame = (id, restoreFocus = false) => {
     const next = findGame(id);
@@ -86,6 +90,7 @@ export function mount(root) {
     renderTiles(restoreFocus);
     renderHero();
   };
+  root.tabIndex = -1;
   root.innerHTML = `<section class="ps-dashboard">
     <section class="ps-game-carousel" aria-label="Your games">
       <div class="ps-game-carousel__items">${GAMES.map(game => gameTile(game, game.id === selected.id)).join('')}<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid')}</span><small>GAME LIBRARY</small></a></div>
@@ -100,18 +105,19 @@ export function mount(root) {
     selectGame(tile.dataset.selectGame);
   };
   const onKey = event => {
-    if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
-    if (event.target.closest('a,button')) {
-      const tiles = [...root.querySelectorAll('[data-select-game]')];
-      const index = tiles.indexOf(event.target.closest('[data-select-game]'));
-      if (index < 0) return;
-      event.preventDefault();
-      const next = tiles[Math.max(0, Math.min(tiles.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)))];
-      if (next) selectGame(next.dataset.selectGame, true);
-    }
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const tiles = [...root.querySelectorAll('[data-select-game]')];
+    if (!tiles.length) return;
+    event.preventDefault();
+    const currentIndex = GAMES.findIndex(game => game.id === selected.id);
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const nextIndex = (currentIndex + direction + GAMES.length) % GAMES.length;
+    selectGame(GAMES[nextIndex].id, true);
   };
   root.addEventListener('click', onClick);
   root.addEventListener('keydown', onKey);
+  root.focus({ preventScroll: true });
   hydrateIcons(root);
   return () => {
     root.removeEventListener('click', onClick);
