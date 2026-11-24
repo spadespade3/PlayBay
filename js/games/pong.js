@@ -85,6 +85,7 @@ export class PongEngine {
       target: null,
       vy: 0,
       speed: 1040,
+      pointerSpeed: 0,
     };
     this.p2 = {
       y: PONG.H / 2,
@@ -93,6 +94,7 @@ export class PongEngine {
       target: null,
       vy: 0,
       speed: this.mode === 'cpu' || this.mode === 'host' ? DIFFICULTY[this.difficulty].speed : 1040,
+      pointerSpeed: 0,
     };
     this.ball = {
       x: PONG.W / 2,
@@ -106,10 +108,12 @@ export class PongEngine {
     this.hasState = this.mode !== 'guest';
   }
 
-  setPaddleTarget(side, y) {
+  setPaddleTarget(side, y, pointerVelocity = 0) {
     const paddle = side === 0 ? this.p1 : this.p2;
     paddle.dir = 0;
     paddle.target = clamp(Number(y) || 0, paddle.h / 2, PONG.H - paddle.h / 2);
+    paddle.pointerSpeed = clamp(Number(pointerVelocity) || 0, -2600, 2600);
+    if (Math.abs(paddle.pointerSpeed) > 20) paddle.speed = Math.max(420, Math.abs(paddle.pointerSpeed));
   }
 
   setPaddleDir(side, dir) {
@@ -196,16 +200,18 @@ export class PongEngine {
       paddle.target = null;
     } else if (paddle.target != null) {
       const diff = paddle.target - paddle.y;
-      const step = paddle.speed * 1.9 * dt;
+      const followSpeed = paddle.pointerSpeed ? Math.max(420, Math.abs(paddle.pointerSpeed)) : paddle.speed * 1.9;
+      const step = followSpeed * dt;
       if (Math.abs(diff) <= step) {
         paddle.y = paddle.target;
-        paddle.vy = 0;
+        paddle.vy = paddle.pointerSpeed;
       } else {
-        paddle.vy = Math.sign(diff) * paddle.speed * 1.9;
+        paddle.vy = Math.sign(diff) * followSpeed;
         paddle.y += paddle.vy * dt;
       }
     } else {
       paddle.vy *= 0.82;
+      paddle.pointerSpeed = 0;
     }
 
     const min = paddle.h / 2;
@@ -286,10 +292,11 @@ export class PongEngine {
     const b = this.ball;
     const rel = clamp((b.y - paddle.y) / (paddle.h / 2 + b.r), -1, 1);
     const angle = rel * 1.02;
-    const nextSpeed = Math.min(PONG.MAX_SPEED, Math.max(PONG.BASE_SPEED, b.speed * 1.055 + 14));
+    const dragBoost = clamp(Math.abs(paddle.vy) * 0.2, 0, 420);
+    const nextSpeed = Math.min(PONG.MAX_SPEED, Math.max(PONG.BASE_SPEED, b.speed * 1.055 + 14 + dragBoost));
     b.speed = nextSpeed;
     b.vx = Math.cos(angle) * nextSpeed * dir;
-    b.vy = Math.sin(angle) * nextSpeed + paddle.vy * 0.16;
+    b.vy = Math.sin(angle) * nextSpeed + paddle.vy * 0.28;
     const maxVy = nextSpeed * 0.92;
     b.vy = clamp(b.vy, -maxVy, maxVy);
     this.rally += 1;
