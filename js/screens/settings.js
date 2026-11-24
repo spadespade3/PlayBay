@@ -11,7 +11,7 @@ export function mount(root) {
   const render = () => {
     settings = getSettings();
     root.innerHTML = `
-      <section class="screen settings">
+      <section class="settings-page">
         <div class="page-head">
           <div class="page-head__copy">
             <span class="eyebrow">Preferences</span>
@@ -161,7 +161,10 @@ export function mount(root) {
     if (previewName) previewName.textContent = settings.name || 'Player';
     const previewAvatar = root.querySelector('.name-preview .avatar');
     if (previewAvatar) previewAvatar.textContent = (settings.name || 'P').trim().charAt(0).toUpperCase();
-    root.querySelectorAll('[data-setting]').forEach(input => input.checked = Boolean(settings[input.dataset.setting]));
+    root.querySelectorAll('[data-setting]').forEach(input => {
+      const key = input.dataset.setting;
+      input.checked = key === 'motion' ? settings.motion === 'full' : Boolean(settings[key]);
+    });
     root.querySelectorAll('[data-vol]').forEach(input => {
       input.value = String(settings[input.dataset.vol] ?? 0);
       const value = input.closest('.volume-row')?.querySelector('.range-value');
