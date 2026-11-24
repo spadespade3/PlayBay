@@ -294,7 +294,11 @@ export function mount(root, params = {}) {
   const onPointerUp = event => {
     pointerDragging = false;
     try { canvas.releasePointerCapture?.(event.pointerId); } catch {}
-    paddleFor(pointerSide()).pointerSpeed = 0;
+    const paddle = paddleFor(pointerSide());
+    paddle.pointerSpeed = 0;
+    paddle.target = null;
+    paddle.vy = 0;
+    paddle.speed = 1040;
   };
   root.addEventListener('keydown', onKeyDown);
   root.addEventListener('keyup', onKeyUp);
