@@ -38,7 +38,7 @@ export function mount(root) {
             <div class="setting-row">
               <div class="setting-row__text">
                 <span class="setting-row__title">Motion</span>
-                <span class="setting-row__desc">Full motion, or reduced for low-power cabinets.</span>
+                <span class="setting-row__desc">Choose animated transitions or a quieter interface.</span>
               </div>
               <div class="setting-row__control">
                 <label class="toggle">
@@ -54,13 +54,13 @@ export function mount(root) {
             <div class="setting-row">
               <div class="setting-row__text">
                 <span class="setting-row__title">CRT scanline</span>
-                <span class="setting-row__desc">Subtle phosphor curvature and scanlines.</span>
+                <span class="setting-row__desc">A subtle scanline effect over the console background.</span>
               </div>
               <div class="setting-row__control">
                 <label class="toggle">
                   <span class="toggle__text">
                     <span class="toggle__title">CRT</span>
-                    <span class="toggle__desc">Scanlines and curvature</span>
+                    <span class="toggle__desc">Scanline overlay</span>
                   </span>
                   <input type="checkbox" data-setting="crt" ${settings.crt ? 'checked' : ''} />
                   <span class="toggle__switch"></span>
@@ -82,7 +82,7 @@ export function mount(root) {
               <span class="volume-row__icon"><span data-icon="${iconName}"></span></span>
               <div class="volume-row__body">
                 <div class="volume-row__label"><span>${label}</span><span class="range-value">${Math.round(value * 100)}%</span></div>
-                <input class="range" type="range" min="0" max="1" step="0.01" value="${value}" data-vol="${label.toLowerCase()}" />
+                <input class="range" type="range" min="0" max="1" step="0.01" value="${value}" data-vol="${label.toLowerCase()}" aria-label="${label} volume" />
               </div>
             </div>`
               )
@@ -98,7 +98,7 @@ export function mount(root) {
               </div>
               <div class="setting-row__control">
                 <div class="segmented" id="difficultySegmented">
-                  ${DIFFICULTIES.map((d) => `<button type="button" class="segmented__btn${settings.difficulty === d ? ' is-active' : ''}" data-diff="${d}">${d === 'chill' ? 'Chill' : d === 'normal' ? 'Normal' : 'Insane'}</button>`).join('')}
+                  ${DIFFICULTIES.map((d) => `<button type="button" class="segmented__btn${settings.difficulty === d ? ' is-active' : ''}" data-diff="${d}" aria-pressed="${settings.difficulty === d}">${d === 'chill' ? 'Chill' : d === 'normal' ? 'Normal' : 'Insane'}</button>`).join('')}
                 </div>
               </div>
             </div>
@@ -170,7 +170,7 @@ export function mount(root) {
       const value = input.closest('.volume-row')?.querySelector('.range-value');
       if (value) value.textContent = Math.round(Number(input.value) * 100) + '%';
     });
-    root.querySelectorAll('[data-diff]').forEach(button => button.classList.toggle('is-active', button.dataset.diff === settings.difficulty));
+    root.querySelectorAll('[data-diff]').forEach(button => button.classList.toggle('is-active', button.dataset.diff === settings.difficulty); button.setAttribute('aria-pressed', String(button.dataset.diff === settings.difficulty));
   };
 
   const onName = (event) => {
