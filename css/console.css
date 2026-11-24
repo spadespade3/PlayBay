@@ -161,3 +161,161 @@ body.playbay-console{overflow-x:hidden}
 }
 html[data-crt='off'] .playbay-console .bg:after{display:none}
 .playbay-console .game-card[hidden],.playbay-console .lib-section[hidden]{display:none!important}
+
+
+/* ================================================================
+   PlayBay motion system — fluid navigation, controls and game focus
+   ================================================================ */
+:root {
+  --motion-out: cubic-bezier(.2,.8,.2,1);
+  --motion-spring: cubic-bezier(.22,1.35,.42,1);
+  --motion-smooth: cubic-bezier(.65,0,.35,1);
+}
+html { scroll-behavior:smooth; }
+.playbay-console .topbar,
+.playbay-console .ps-mainnav .navlink,
+.playbay-console .ps-icon-link,
+.playbay-console button,
+.playbay-console a,
+.playbay-console .panel,
+.playbay-console .mp-card,
+.playbay-console .room,
+.playbay-console .setting-row,
+.playbay-console .toast,
+.playbay-console .modal {
+  transition:
+    color .22s var(--motion-out),
+    background-color .25s var(--motion-out),
+    border-color .25s var(--motion-out),
+    box-shadow .3s var(--motion-out),
+    transform .32s var(--motion-spring),
+    opacity .25s var(--motion-out),
+    filter .3s var(--motion-out);
+}
+.playbay-console .screen {
+  animation:pbScreenIn .46s var(--motion-out) both;
+  transform-origin:50% 12%;
+}
+.playbay-console .screen.is-leaving {
+  animation:pbScreenOut .14s ease-in both;
+  pointer-events:none;
+}
+.playbay-console .ps-mainnav .navlink { isolation:isolate; }
+.playbay-console .ps-mainnav .navlink:before {
+  content:"";position:absolute;z-index:-1;inset:12px -12px;
+  border-radius:999px;background:rgba(255,255,255,.075);
+  opacity:0;transform:scale(.82);
+  transition:opacity .22s var(--motion-out),transform .3s var(--motion-spring);
+}
+.playbay-console .ps-mainnav .navlink:hover:before,
+.playbay-console .ps-mainnav .navlink:focus-visible:before {opacity:1;transform:scale(1)}
+.playbay-console .ps-mainnav .navlink.is-active:after {
+  transform-origin:left center;
+  animation:pbNavIndicator .34s var(--motion-out) both;
+}
+.playbay-console .ps-icon-link:hover,
+.playbay-console .ps-profile:hover { transform:translateY(-2px) scale(1.06); }
+.playbay-console .ps-activity-card,
+.playbay-console .ps-continue-card {
+  transition:transform .38s var(--motion-spring),border-color .25s,box-shadow .3s,background-color .25s;
+}
+.playbay-console .ps-activity-card:hover,
+.playbay-console .ps-continue-card:hover {
+  transform:translateY(-5px) scale(1.008);
+  border-color:rgba(227,38,54,.38);
+  box-shadow:0 18px 38px rgba(0,0,0,.26);
+}
+.playbay-console .ps-game-carousel__caption {
+  animation:pbCaptionIn .3s var(--motion-out) both;
+}
+.playbay-console .ps-game-tile {
+  flex-basis:clamp(54px,5.5vw,78px);
+  width:clamp(54px,5.5vw,78px);
+  transform:scale(.91);
+  opacity:.72;
+  filter:saturate(.68) brightness(.84);
+  transition:
+    flex-basis .48s var(--motion-spring),
+    width .48s var(--motion-spring),
+    transform .48s var(--motion-spring),
+    filter .35s var(--motion-out),
+    opacity .35s var(--motion-out),
+    border-color .3s,
+    box-shadow .38s var(--motion-out);
+  will-change:flex-basis,transform;
+}
+.playbay-console .ps-game-tile:hover {transform:translateY(-3px) scale(.98);opacity:.95;filter:saturate(1)}
+.playbay-console .ps-game-tile.is-selected {
+  flex-basis:clamp(88px,9.5vw,132px);
+  width:clamp(88px,9.5vw,132px);
+  transform:translateY(-7px) scale(1.045);
+  opacity:1;filter:saturate(1.12) brightness(1.08);
+  box-shadow:0 0 0 2px rgba(227,38,54,.76),0 13px 30px rgba(0,0,0,.58);
+}
+.playbay-console .ps-game-tile__art svg {transition:transform .55s var(--motion-out),filter .4s}
+.playbay-console .ps-game-tile.is-selected .ps-game-tile__art svg {transform:scale(1.08)}
+.playbay-console .ps-game-tile__selected-mark {
+  display:grid;opacity:0;transform:scale(.35) rotate(-35deg);
+  transition:opacity .2s,transform .38s var(--motion-spring);
+}
+.playbay-console .ps-game-tile.is-selected .ps-game-tile__selected-mark {
+  opacity:1;transform:scale(1) rotate(0);
+}
+.playbay-console .ps-hero {view-transition-name:pb-featured-scene}
+.playbay-console .ps-hero__backdrop {view-transition-name:pb-featured-art}
+::view-transition-old(pb-featured-art) {
+  animation:pbArtOut .42s var(--motion-smooth) both;
+}
+::view-transition-new(pb-featured-art) {
+  animation:pbArtIn .58s var(--motion-out) both;
+}
+::view-transition-old(pb-featured-scene) {
+  animation:pbSceneOut .28s ease-in both;
+}
+::view-transition-new(pb-featured-scene) {
+  animation:pbSceneIn .46s var(--motion-out) both;
+}
+.playbay-console .ps-hero__backdrop svg {
+  transition:filter .5s var(--motion-out);
+}
+.playbay-console .ps-primary-action:hover,
+.playbay-console .ps-secondary-action:hover,
+.playbay-console .ps-more-action:hover {
+  transform:translateY(-3px) scale(1.035);
+}
+.playbay-console .ps-primary-action:active,
+.playbay-console .ps-secondary-action:active,
+.playbay-console .ps-more-action:active {
+  transform:translateY(1px) scale(.97);
+}
+.playbay-console .ps-status-dot {animation:pbStatusPulse 2.4s ease-in-out infinite}
+@keyframes pbScreenIn {
+  from {opacity:0;transform:translateY(14px) scale(.99);filter:blur(5px)}
+  to {opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@keyframes pbScreenOut {to {opacity:0;transform:translateY(-5px) scale(.995);filter:blur(3px)}}
+@keyframes pbNavIndicator {from{transform:scaleX(.15);opacity:.25}to{transform:scaleX(1);opacity:1}}
+@keyframes pbCaptionIn {from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pbArtOut {to{opacity:0;transform:scale(1.055) translateX(-1.2%);filter:blur(5px)}}
+@keyframes pbArtIn {from{opacity:0;transform:scale(1.075) translateX(1.2%);filter:blur(5px)}to{opacity:1;transform:scale(1) translateX(0);filter:blur(0)}}
+@keyframes pbSceneOut {to{opacity:0}}
+@keyframes pbSceneIn {from{opacity:.72}to{opacity:1}}
+@keyframes pbStatusPulse {0%,100%{box-shadow:0 0 0 0 rgba(227,38,54,.48)}50%{box-shadow:0 0 0 6px rgba(227,38,54,0)}}
+@media(max-width:620px) {
+  .playbay-console .ps-game-tile {flex-basis:50px;width:50px}
+  .playbay-console .ps-game-tile.is-selected {flex-basis:74px;width:74px}
+}
+@media(prefers-reduced-motion:reduce) {
+  html {scroll-behavior:auto}
+  .playbay-console .screen,
+  .playbay-console .screen.is-leaving,
+  .playbay-console .ps-game-carousel__caption,
+  .playbay-console .ps-status-dot {animation:none!important}
+  .playbay-console *,
+  .playbay-console *:before,
+  .playbay-console *:after {transition-duration:.01ms!important;scroll-behavior:auto!important}
+  ::view-transition-old(pb-featured-art),
+  ::view-transition-new(pb-featured-art),
+  ::view-transition-old(pb-featured-scene),
+  ::view-transition-new(pb-featured-scene) {animation:none!important}
+}
