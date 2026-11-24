@@ -241,8 +241,13 @@ export function mount(root, params = {}) {
     if (reason === 'host' || reason === 'timeout') networkError = 'The host left the room. Return to the lobby.';
     else if (mode === 'host') networkError = 'The guest left the room. Return to the lobby or start a new session.';
   });
-  const offRoom = net.on('room', updateNetPill);
-  const offPlayers = net.on('players', updateNetPill);
+  const clearRecoveredRoomError = () => {
+    updateNetPill();
+    if (net.inRoom && net.players.length >= 2) networkError = '';
+  };
+  const offRoom = net.on('room', clearRecoveredRoomError);
+  const offPlayers = net.on('players', clearRecoveredRoomError);
+  const offPeerJoined = net.on('peer-joined', () => { networkError = ''; });
 
   const keyDirection = (side) => {
     if (side === 1) {
@@ -451,5 +456,6 @@ export function mount(root, params = {}) {
     net.off('peer-left', offPeerLeft);
     net.off('room', offRoom);
     net.off('players', offPlayers);
+    net.off('peer-joined', offPeerJoined);
   };
 }
