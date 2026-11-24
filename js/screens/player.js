@@ -1,6 +1,5 @@
 /* PlayBay · Neon Pong player screen */
-
-import { getSettings, recordMatch } from '../store.js';
+import { getSettings, recordMatch, recordPlay } from '../store.js';
 import { net } from '../net.js';
 import { audio } from '../audio.js';
 import { confetti, icon } from '../ui.js';
@@ -8,59 +7,56 @@ import { PongEngine, PONG } from '../games/pong.js';
 
 const W = PONG.W;
 const H = PONG.H;
-
-const MODE_LABEL = {
-  cpu: 'VS CPU',
-  local: 'Local 2P',
-  host: 'Host Online',
-  guest: 'Join Online',
-};
+const MODE_LABEL = { cpu: 'VS CPU', local: 'Local 2P', host: 'Host Online', guest: 'Join Online' };
+const ALLOWED_MODES = new Set(Object.keys(MODE_LABEL));
 
 export function mount(root, params = {}) {
-  const gameId = params.id || 'neon-pong';
-  const mode = params.mode || 'cpu';
+  const mode = ALLOWED_MODES.has(params.mode) ? params.mode : 'cpu';
+  const gameId = params.id === 'neon-pong' ? params.id : 'neon-pong';
+  if ((mode === 'host' && (!net.inRoom || !net.isHost)) || (mode === 'guest' && (!net.inRoom || net.isHost))) {
+    window.location.hash = '#/multiplayer';
+    return () => {};
+  }
+
   const settings = getSettings();
   const difficulty = ['chill', 'normal', 'insane'].includes(settings.difficulty) ? settings.difficulty : 'normal';
   const names = mode === 'local' ? ['P1', 'P2'] : [settings.name || 'Player One', 'Opponent'];
-
   const engine = new PongEngine({ mode, difficulty, target: PONG.TARGET, names });
 
   root.innerHTML = `
     <div class="player-top">
-      <div class="player-top__title"><strong>Neon Pong</strong><span>${MODE_LABEL[mode] || mode}</span></div>
+      <div class="player-top__title"><strong>Neon Pong</strong><span>${MODE_LABEL[mode]}</span></div>
       <div class="player-actions">
         <button type="button" class="btn btn--icon" data-action="pause" data-icon="pause" aria-label="Pause"></button>
         <button type="button" class="btn btn--icon" data-action="restart" data-icon="restart" aria-label="Restart"></button>
         <button type="button" class="btn btn--icon" data-action="menu" data-icon="x" aria-label="Menu"></button>
       </div>
-      <div class="player-meta">
-        <span class="net-pill" data-state="local">Local play</span>
-      </div>
+      <div class="player-meta"><span class="net-pill" data-state="local">Local play</span></div>
     </div>
-
     <div class="stage">
-      <div class="stage__frame">
-        <canvas id="pongCanvas" class="stage__canvas"></canvas>
-      </div>
+      <div class="stage__frame"><canvas id="pongCanvas" class="stage__canvas" aria-label="Neon Pong game field"></canvas></div>
       <div class="stage__overlay" style="display:none">
         <div class="overlay-card">
           <span class="overlay-card__icon"><span data-icon="info"></span></span>
           <h2 id="overlayTitle">Get ready</h2>
-          <p id="overlayText">The ball is loading. First to seven takes the set.</p>
+          <p id="overlayText">First to seven takes the set.</p>
           <div class="overlay-score" id="overlayScore" style="display:none"><span>0</span><em>-</em><span class="p2">0</span></div>
           <div class="btn-row" id="overlayActions"></div>
         </div>
       </div>
     </div>
-
     <div class="player-foot">
-      <span class="hint">W/S move · Space serve · Mouse / touch</span>
-      <span class="hint"><span data-icon="gamepad"></span> Controller supported</span>
+      <span class="hint">${mode === 'local' ? 'P1: W/S · P2: ↑/↓' : 'W/S or ↑/↓ move'} · P/Esc pause · R restart · Mouse/touch drag</span>
+      <span class="hint"><span data-icon="gamepad"></span> Gamepad supported</span>
     </div>
   `;
 
   const canvas = root.querySelector('#pongCanvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas?.getContext('2d');
+  if (!canvas || !ctx) {
+    root.textContent = 'Your browser could not create a 2D canvas for Neon Pong.';
+    return () => {};
+  }
   const frame = root.querySelector('.stage__frame');
   const overlay = root.querySelector('.stage__overlay');
   const overlayIcon = root.querySelector('.overlay-card__icon');
@@ -68,19 +64,27 @@ export function mount(root, params = {}) {
   const overlayText = root.querySelector('#overlayText');
   const overlayScore = root.querySelector('#overlayScore');
   const overlayActions = root.querySelector('#overlayActions');
-  const netPill = root.querySelector('.net-pill');
   const playerTitle = root.querySelector('.player-top__title');
-  const playerFoot = root.querySelector('.player-foot');
+  const netPill = root.querySelector('.net-pill');
 
   let raf = 0;
   let last = performance.now();
   let lastPhase = engine.phase;
   let overlayKind = null;
+  let overlaySignature = '';
   let lastSent = 0;
+  let networkError = '';
+  let pointerDragging = false;
+  let pointerId = null;
+  let lastPointerY = 0;
+  let lastPointerAt = 0;
+  const pressedKeys = new Set();
+  let gamepadDirection = 0;
 
   const resize = () => {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     canvas.width = Math.max(2, Math.round(rect.width * dpr));
     canvas.height = Math.max(2, Math.round(rect.height * dpr));
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
@@ -89,237 +93,301 @@ export function mount(root, params = {}) {
   const ro = new ResizeObserver(resize);
   if (frame) ro.observe(frame);
 
-  const showOverlay = (kind, title, text, { score = null, iconName = 'info', actions = [] } = {}) => {
+  const showOverlay = (kind, title, message, { score = null, iconName = 'info', actions = [] } = {}) => {
+    const signature = JSON.stringify({ kind, title, message, score, iconName, actions });
+    if (signature === overlaySignature) return;
+    overlaySignature = signature;
     overlayKind = kind;
     overlay.style.display = kind ? 'grid' : 'none';
     if (overlayIcon) overlayIcon.innerHTML = icon(iconName);
     if (overlayTitle) overlayTitle.textContent = title;
-    if (overlayText) overlayText.textContent = text;
+    if (overlayText) overlayText.textContent = message;
     if (overlayScore) overlayScore.style.display = score ? 'flex' : 'none';
     if (overlayScore && score) {
-      overlayScore.innerHTML = `<span>${score[0]}</span><em>-</em><span class="p2">${score[1]}</span>`;
+      overlayScore.replaceChildren();
+      const left = document.createElement('span');
+      const separator = document.createElement('em');
+      const right = document.createElement('span');
+      left.textContent = String(score[0]);
+      separator.textContent = '-';
+      right.className = 'p2';
+      right.textContent = String(score[1]);
+      overlayScore.append(left, separator, right);
     }
     if (overlayActions) {
-      overlayActions.innerHTML = actions
-        .map(
-          (a) =>
-            `<button type="button" class="btn ${a.primary ? 'btn--primary' : 'btn--ghost'}" data-overlay-action="${a.action}">${a.label}</button>`
-        )
-        .join('');
+      overlayActions.innerHTML = actions.map((action) =>
+        `<button type="button" class="btn ${action.primary ? 'btn--primary' : 'btn--ghost'}" data-overlay-action="${action.action}">${action.label}</button>`
+      ).join('');
     }
   };
 
-  const fireOverlayAction = (event) => {
-    const button = event.target.closest('[data-overlay-action]');
-    if (!button) return;
-    const action = button.dataset.overlayAction;
-    if (action === 'rematch') {
-      engine.restart();
-      audio.play('start');
-    } else if (action === 'menu') {
-      if (net.inRoom) net.leave();
-      window.location.hash = '#/game/neon-pong';
-    }
+  const hideOverlay = () => {
+    if (!overlayKind && overlay.style.display === 'none') return;
+    overlay.style.display = 'none';
+    overlayKind = null;
+    overlaySignature = '';
   };
-  overlay.addEventListener('click', fireOverlayAction);
-  overlayActions?.addEventListener('click', fireOverlayAction);
+
+  const updateNetPill = () => {
+    if (!netPill) return;
+    netPill.dataset.state = net.state !== 'open' ? 'local' : net.inRoom ? 'room' : 'online';
+    netPill.textContent = net.state !== 'open' ? 'Local play' : net.inRoom ? (net.isHost ? 'Host · room' : 'Guest · room') : 'Online';
+  };
+
+  const playerSide = mode === 'guest' ? 1 : 0;
+  const pointerSide = playerSide;
+  const paddleFor = (side) => side === 0 ? engine.p1 : engine.p2;
 
   const firePause = () => {
     if (engine.phase === 'over') return;
-    if (mode === 'guest') net.control('pause');
+    if (mode === 'guest') net.control(engine.paused ? 'resume' : 'pause');
     else engine.togglePause();
+  };
+  const fireResume = () => {
+    if (mode === 'guest') net.control('resume');
+    else engine.togglePause(false);
   };
   const fireRestart = () => {
     if (mode === 'guest') net.control('restart');
     else engine.restart();
+    audio.play('start');
   };
   const fireMenu = () => {
     if (net.inRoom) net.leave();
     window.location.hash = '#/game/neon-pong';
   };
 
-  const pauseButton = root.querySelector('[data-action="pause"]');
-  const restartButton = root.querySelector('[data-action="restart"]');
-  const menuButton = root.querySelector('[data-action="menu"]');
-  pauseButton?.addEventListener('click', firePause);
-  restartButton?.addEventListener('click', fireRestart);
-  menuButton?.addEventListener('click', fireMenu);
-
-  const syncNetPill = () => {
-    const el = root.querySelector('.net-pill');
-    if (!el) return;
-    const online = net.state === 'open';
-    const inRoom = net.inRoom;
-    el.dataset.state = !online ? 'local' : inRoom ? 'room' : 'online';
-    el.textContent = !online ? 'Local play' : inRoom ? net.isHost ? 'Host · room' : 'Guest · room' : 'Online';
+  const onOverlayClick = (event) => {
+    const button = event.target.closest('[data-overlay-action]');
+    if (!button) return;
+    const action = button.dataset.overlayAction;
+    if (action === 'resume') fireResume();
+    else if (action === 'rematch') fireRestart();
+    else if (action === 'menu') fireMenu();
   };
+  overlay.addEventListener('click', onOverlayClick);
+
+  root.querySelector('[data-action="pause"]')?.addEventListener('click', firePause);
+  root.querySelector('[data-action="restart"]')?.addEventListener('click', fireRestart);
+  root.querySelector('[data-action="menu"]')?.addEventListener('click', fireMenu);
 
   const syncOverlays = () => {
-    if (engine.phase === 'over') {
-      const winnerSide = engine.winner;
-      showOverlay(
-        'over',
-        winnerSide === 0 ? 'Victory' : 'Defeat',
-        winnerSide === 0 ? 'You took the set. The rally went long.' : 'The rally ran out. The arcade keeps score.',
+    if (networkError) {
+      showOverlay('network-error', 'Connection lost', networkError, {
+        iconName: 'alert',
+        actions: [{ action: 'menu', label: 'Back to lobby' }],
+      });
+    } else if (engine.phase === 'over') {
+      const userWon = engine.winner === playerSide;
+      showOverlay('over', userWon ? 'Victory' : 'Defeat',
+        userWon ? 'You took the set. The rally went long.' : 'The rally ran out. The arcade keeps score.',
         {
           score: [engine.scores[0], engine.scores[1]],
-          iconName: winnerSide === 0 ? 'trophy' : 'flag',
-          actions: [
-            { action: 'rematch', label: 'Rematch' },
-            { action: 'menu', label: 'Menu' },
-          ],
-        }
-      );
-      if (lastPhase !== 'over') {
-        const isWin = winnerSide === 0;
-        recordMatch({
-          gameId,
-          mode,
-          result: isWin ? 'win' : 'loss',
-          score: isWin ? engine.scores[0] : engine.scores[1],
-          rally: engine.maxRally || 0,
-          seconds: engine.elapsed || 0,
+          iconName: userWon ? 'trophy' : 'flag',
+          actions: [{ action: 'rematch', label: 'Rematch' }, { action: 'menu', label: 'Menu' }],
         });
-        confetti();
-      }
     } else if (engine.paused) {
-      showOverlay(
-        'paused',
-        'Paused',
-        'Court frozen. Ball, paddles and score all hold.',
-        {
-          iconName: 'pause',
-          actions: [
-            { action: 'rematch', label: 'Resume' },
-            { action: 'menu', label: 'Menu' },
-          ],
-        }
-      );
-    } else if (overlayKind) {
-      overlay.style.display = 'none';
-      overlayKind = null;
+      showOverlay('paused', 'Paused', 'Court frozen. Ball, paddles and score all hold.', {
+        iconName: 'pause',
+        actions: [{ action: 'resume', label: 'Resume' }, { action: 'menu', label: 'Menu' }],
+      });
+    } else {
+      hideOverlay();
     }
   };
 
   const offState = net.on('state', (state) => {
     if (mode === 'guest') engine.applySnapshot(state);
   });
-  const offInput = net.on('input', ({ y }) => {
-    if (mode !== 'guest') return;
-    engine.setPaddleTarget(1, Number(y));
+  const offInput = net.on('input', ({ y, dir, velocity, release }) => {
+    if (mode !== 'host') return;
+    const paddle = engine.p2;
+    if (release) {
+      paddle.target = null;
+      paddle.pointerSpeed = null;
+      paddle.vy = 0;
+    } else if (dir === -1 || dir === 0 || dir === 1) {
+      engine.setPaddleDir(1, dir);
+    } else if (Number.isFinite(y)) {
+      engine.setPaddleTarget(1, y, Number.isFinite(velocity) ? velocity : null);
+    }
   });
   const offControl = net.on('control', (action) => {
     if (action === 'pause') engine.togglePause(true);
-    if (action === 'restart') engine.restart();
+    else if (action === 'resume') engine.togglePause(false);
+    else if (action === 'restart') engine.restart();
   });
-  const offEvent = net.on('event', (name, data) => {
-    audio.play(name, data || {});
-  });
+  const offEvent = net.on('event', (name) => audio.play(name));
   const offError = net.on('error', (message) => {
-    if (net.inRoom) {
-      showOverlay('error', 'Connection lost', message || 'The room link dropped.', {
-        iconName: 'alert',
-        actions: [{ action: 'menu', label: 'Back to lobby' }],
-      });
-    }
+    if (net.inRoom) networkError = message || 'The room rejected the request.';
   });
   const offClosed = net.on('closed', ({ wasRoom }) => {
-    if (wasRoom || net.inRoom) {
-      showOverlay('error', 'Connection lost', 'The host left or the room dropped. Return to the lobby.', {
-        iconName: 'alert',
-        actions: [{ action: 'menu', label: 'Back to lobby' }],
-      });
-    }
+    if (wasRoom) networkError = 'The host or guest connection was closed. Return to the lobby.';
   });
-  const offRoom = net.on('room', syncNetPill);
-  const offPlayers = net.on('players', syncNetPill);
+  const offPeerLeft = net.on('peer-left', ({ reason }) => {
+    if (reason === 'host' || reason === 'timeout') networkError = 'The host left the room. Return to the lobby.';
+    else if (mode === 'host') networkError = 'The guest left the room. Return to the lobby or start a new session.';
+  });
+  const offRoom = net.on('room', updateNetPill);
+  const offPlayers = net.on('players', updateNetPill);
 
-  const paddleFor = (side) => (side === 0 ? engine.p1 : engine.p2);
+  const keyDirection = (side) => {
+    if (side === 1) {
+      const up = pressedKeys.has('ArrowUp');
+      const down = pressedKeys.has('ArrowDown');
+      return up === down ? 0 : up ? -1 : 1;
+    }
+    const up = pressedKeys.has('KeyW');
+    const down = pressedKeys.has('KeyS');
+    return up === down ? 0 : up ? -1 : 1;
+  };
+  const applyKeyMovement = (side) => {
+    const direction = keyDirection(side);
+    if (mode === 'guest') {
+      engine.setPaddleDir(1, direction);
+      net.sendInput(undefined, { dir: direction });
+    } else {
+      engine.setPaddleDir(side, direction);
+    }
+  };
 
   const onKeyDown = (event) => {
-    const key = event.key;
-    const dir = key === 'ArrowUp' || key === 'KeyW' ? -1 : key === 'ArrowDown' || key === 'KeyS' ? 1 : 0;
-    if (dir === 0) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (event.code === 'KeyP' || event.code === 'Escape' || event.code === 'Space') {
+      event.preventDefault();
+      if (!event.repeat) firePause();
+      return;
+    }
+    if (event.code === 'KeyR') {
+      event.preventDefault();
+      if (!event.repeat) fireRestart();
+      return;
+    }
+    const movementCode = ['KeyW', 'KeyS', 'ArrowUp', 'ArrowDown'].includes(event.code);
+    if (!movementCode) return;
     event.preventDefault();
+    if (event.repeat) return;
+    pressedKeys.add(event.code);
     audio.play('click');
-    if (mode === 'guest') {
-      engine.setPaddleDir(1, dir > 0 ? 1 : -1);
-      net.sendInput(engine.p2.y);
+    if (mode === 'local') {
+      applyKeyMovement(event.code.startsWith('Arrow') ? 1 : 0);
     } else {
-      const side = mode === 'local' ? (key.startsWith('Arrow') ? 1 : 0) : 0;
-      engine.setPaddleDir(side, dir > 0 ? 1 : -1);
+      const side = mode === 'guest' ? 1 : 0;
+      if (event.code.startsWith('Arrow')) {
+        // Arrow keys are also valid for single-player/guest input; local P2 remains independent.
+        if (mode === 'local') applyKeyMovement(1);
+        else applyKeyMovement(side);
+      } else applyKeyMovement(side);
     }
   };
   const onKeyUp = (event) => {
-    const key = event.key;
-    const dir = key === 'ArrowUp' || key === 'KeyW' ? -1 : key === 'ArrowDown' || key === 'KeyS' ? 1 : 0;
-    if (dir === 0) return;
-    if (mode === 'guest') {
-      engine.setPaddleDir(1, 0);
-      net.sendInput(engine.p2.y);
+    if (!['KeyW', 'KeyS', 'ArrowUp', 'ArrowDown'].includes(event.code)) return;
+    pressedKeys.delete(event.code);
+    if (mode === 'local') {
+      applyKeyMovement(event.code.startsWith('Arrow') ? 1 : 0);
     } else {
-      const side = mode === 'local' ? (key.startsWith('Arrow') ? 1 : 0) : 0;
-      engine.setPaddleDir(side, 0);
+      applyKeyMovement(mode === 'guest' ? 1 : 0);
     }
   };
+  const onWindowBlur = () => {
+    pressedKeys.clear();
+    engine.setPaddleDir(playerSide, 0);
+    if (mode === 'guest') net.sendInput(undefined, { dir: 0 });
+  };
+
   let pointerDragging = false;
+  let pointerId = null;
   let lastPointerY = 0;
   let lastPointerAt = 0;
-  const pointerSide = () => (mode === 'guest' ? 1 : 0);
-  const pointerY = event => {
+  const pointerY = (event) => {
     const rect = canvas.getBoundingClientRect();
     return ((event.clientY - rect.top) / Math.max(1, rect.height)) * H;
   };
-  const onPointerDown = event => {
+  const onPointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
     pointerDragging = true;
-    canvas.setPointerCapture?.(event.pointerId);
-    const y = pointerY(event), paddle = paddleFor(pointerSide());
-    lastPointerY = y; lastPointerAt = performance.now();
+    pointerId = event.pointerId;
+    canvas.setPointerCapture?.(pointerId);
+    const y = pointerY(event);
+    const paddle = paddleFor(pointerSide);
+    lastPointerY = y;
+    lastPointerAt = performance.now();
     const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
-    engine.setPaddleTarget(pointerSide(), clamped);
+    engine.setPaddleTarget(pointerSide, clamped);
     if (mode === 'guest') net.sendInput(clamped);
   };
-  const onPointerMove = event => {
-    if (!pointerDragging) return;
-    const y = pointerY(event), now = performance.now();
+  const onPointerMove = (event) => {
+    if (!pointerDragging || (pointerId !== null && event.pointerId !== pointerId)) return;
+    const y = pointerY(event);
+    const now = performance.now();
     const dt = Math.max(0.008, (now - lastPointerAt) / 1000);
-    const velocity = (y - lastPointerY) / dt;
-    lastPointerY = y; lastPointerAt = now;
-    const paddle = paddleFor(pointerSide());
+    const velocity = Math.max(-2600, Math.min(2600, (y - lastPointerY) / dt));
+    lastPointerY = y;
+    lastPointerAt = now;
+    const paddle = paddleFor(pointerSide);
     const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
-    engine.setPaddleTarget(pointerSide(), clamped, velocity);
-    if (mode === 'guest') net.sendInput(clamped);
+    engine.setPaddleTarget(pointerSide, clamped, velocity);
+    if (mode === 'guest') net.sendInput(clamped, { velocity });
   };
-  const onPointerUp = event => {
+  const onPointerUp = (event) => {
+    if (!pointerDragging || (pointerId !== null && event.pointerId !== pointerId)) return;
     pointerDragging = false;
-    try { canvas.releasePointerCapture?.(event.pointerId); } catch {}
-    const paddle = paddleFor(pointerSide());
-    paddle.pointerSpeed = 0;
+    try { if (pointerId !== null) canvas.releasePointerCapture?.(pointerId); } catch {}
+    pointerId = null;
+    const paddle = paddleFor(pointerSide);
+    paddle.pointerSpeed = null;
     paddle.target = null;
     paddle.vy = 0;
-    paddle.speed = 1040;
+    if (mode === 'guest') net.sendInput(paddle.y, { release: true });
   };
+
+  const readGamepad = () => {
+    const gamepad = Array.from(navigator.getGamepads?.() || []).find((item) => item?.connected);
+    let direction = 0;
+    if (gamepad) {
+      const yAxis = gamepad.axes?.[1] || 0;
+      if (gamepad.buttons?.[12]?.pressed || yAxis < -0.35) direction = -1;
+      else if (gamepad.buttons?.[13]?.pressed || yAxis > 0.35) direction = 1;
+    }
+    if (direction !== gamepadDirection) {
+      gamepadDirection = direction;
+      if (mode === 'guest') {
+        engine.setPaddleDir(1, direction);
+        net.sendInput(undefined, { dir: direction });
+      } else engine.setPaddleDir(0, direction);
+    }
+  };
+
   root.addEventListener('keydown', onKeyDown);
   root.addEventListener('keyup', onKeyUp);
+  window.addEventListener('blur', onWindowBlur);
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointercancel', onPointerUp);
+  canvas.addEventListener('lostpointercapture', onPointerUp);
 
   const renderFrame = (now) => {
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
+    readGamepad();
     engine.update(dt);
-    for (const ev of engine.drainEvents()) audio.play(typeof ev === 'string' ? ev : ev.name, typeof ev === 'object' ? ev : {});
+
+    const events = engine.drainEvents();
+    for (const event of events) {
+      const name = typeof event === 'string' ? event : event.name;
+      audio.play(name, typeof event === 'object' ? event : {});
+      if (mode === 'host' && name) net.sendEvent(name);
+    }
 
     if (engine.phase === 'over' && lastPhase !== 'over') {
-      const isWin = engine.winner === 0;
+      const isWin = engine.winner === playerSide;
       recordMatch({
         gameId,
         mode,
         result: isWin ? 'win' : 'loss',
-        score: isWin ? engine.scores[0] : engine.scores[1],
+        score: isWin ? engine.scores[playerSide] : engine.scores[1 - playerSide],
         rally: engine.maxRally || 0,
         seconds: engine.elapsed || 0,
       });
@@ -327,57 +395,44 @@ export function mount(root, params = {}) {
     }
     lastPhase = engine.phase;
 
-    if (mode !== 'guest' && net.inRoom && net.isHost) {
-      const nowT = performance.now();
-      if (nowT - lastSent > 33) {
-        net.sendState(engine.snapshot());
-        lastSent = nowT;
-      }
+    if (mode === 'host' && net.inRoom && net.isHost && now - lastSent >= 33) {
+      net.sendState(engine.snapshot());
+      lastSent = now;
     }
 
     ctx.save();
     engine.render(ctx, { showHud: getSettings().showHud });
     ctx.restore();
-
     syncOverlays();
     raf = requestAnimationFrame(renderFrame);
   };
 
-  const start = () => {
-    raf = requestAnimationFrame(renderFrame);
-  };
+  recordPlay({ gameId, mode });
+  updateNetPill();
   overlay.style.display = 'none';
-  start();
-
-  if (playerTitle) {
-    playerTitle.innerHTML = `<strong>Neon Pong</strong><span>${MODE_LABEL[mode] || mode}</span>`;
-  }
-  if (playerFoot) {
-    playerFoot.innerHTML = mode === 'guest'
-      ? '<span class="hint">Host runs the sim · you send inputs</span>'
-      : '<span class="hint">W/S move · Space serve · Mouse / touch</span>';
-  }
+  raf = requestAnimationFrame(renderFrame);
 
   return () => {
     cancelAnimationFrame(raf);
     ro.disconnect();
+    pressedKeys.clear();
+    if (pointerDragging) onPointerUp({ pointerId });
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('keyup', onKeyUp);
+    window.removeEventListener('blur', onWindowBlur);
     canvas.removeEventListener('pointerdown', onPointerDown);
     canvas.removeEventListener('pointermove', onPointerMove);
     canvas.removeEventListener('pointerup', onPointerUp);
     canvas.removeEventListener('pointercancel', onPointerUp);
-    overlay.removeEventListener('click', fireOverlayAction);
-    overlayActions?.removeEventListener('click', fireOverlayAction);
-    pauseButton?.removeEventListener('click', firePause);
-    restartButton?.removeEventListener('click', fireRestart);
-    menuButton?.removeEventListener('click', fireMenu);
+    canvas.removeEventListener('lostpointercapture', onPointerUp);
+    overlay.removeEventListener('click', onOverlayClick);
     net.off('state', offState);
     net.off('input', offInput);
     net.off('control', offControl);
     net.off('event', offEvent);
     net.off('error', offError);
     net.off('closed', offClosed);
+    net.off('peer-left', offPeerLeft);
     net.off('room', offRoom);
     net.off('players', offPlayers);
   };
