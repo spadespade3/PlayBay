@@ -367,6 +367,9 @@ class Client {
       }
       return;
     }
+    // A continuation without an active fragmented message, or binary
+    // messages (the application protocol is JSON text only), are invalid.
+    if (opcode === 0x0 || opcode === 0x2) this.terminate();
   }
 
   onMessage(payload) {
@@ -379,7 +382,7 @@ class Client {
     }
     if (!message || typeof message.type !== 'string') return;
     if (!this.allowMessage(message.type)) {
-      this.error('Too many requests. Slow down and try again.');
+      this.terminate();
       return;
     }
 
@@ -487,6 +490,10 @@ function handleMessage(client, message) {
       const room = rooms.get(code);
       if (!room) {
         client.error('Room not found. Check the code and try again.');
+        return;
+      }
+      if (client.room === room) {
+        client.error('You are already connected to that room.');
         return;
       }
       if (room.started) {
