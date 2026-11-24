@@ -80,8 +80,11 @@ function emptyGameStats() {
   };
 }
 
+const GAME_IDS = new Set(GAMES.map((game) => game.id));
+const PLAY_MODES = new Set(['cpu', 'local', 'host', 'guest']);
+
 function emptyStats() {
-  const games = {};
+  const games = Object.create(null);
   for (const game of GAMES) games[game.id] = emptyGameStats();
   return { games, lastGame: null, lastMode: null };
 }
@@ -104,8 +107,8 @@ function sanitizeStats(input) {
       };
     }
   }
-  base.lastGame = typeof input.lastGame === 'string' ? input.lastGame : null;
-  base.lastMode = typeof input.lastMode === 'string' ? input.lastMode : null;
+  base.lastGame = typeof input.lastGame === 'string' && GAME_IDS.has(input.lastGame) ? input.lastGame : null;
+  base.lastMode = typeof input.lastMode === 'string' && PLAY_MODES.has(input.lastMode) ? input.lastMode : null;
   return base;
 }
 
@@ -144,13 +147,11 @@ export function getStats() {
 }
 
 export function getGameStats(gameId) {
-  return { ...(stats.games[gameId] || emptyGameStats()) };
+  return { ...(Object.hasOwn(stats.games, gameId) ? stats.games[gameId] : emptyGameStats()) };
 }
 
 export function recordMatch({ gameId, mode, result, score, rally, seconds }) {
-  if (!stats.games[gameId]) {
-    stats.games[gameId] = emptyGameStats();
-  }
+  if (typeof gameId !== 'string' || !GAME_IDS.has(gameId)) return null;
   const row = stats.games[gameId];
   row.plays += 1;
   if (result === 'win') row.wins += 1;
@@ -160,14 +161,14 @@ export function recordMatch({ gameId, mode, result, score, rally, seconds }) {
   row.seconds += Math.max(0, Math.floor(Number(seconds) || 0));
   row.lastPlayed = Date.now();
   stats.lastGame = gameId;
-  stats.lastMode = mode || null;
+  stats.lastMode = PLAY_MODES.has(mode) ? mode : null;
   writeJSON(STATS_KEY, stats);
   emit({ type: 'stats', stats: getStats() });
   return { ...row };
 }
 
 export function recordPlay({ gameId, mode }) {
-  if (!stats.games[gameId]) return;
+  if (typeof gameId !== 'string' || !GAME_IDS.has(gameId) || !Object.hasOwn(stats.games, gameId)) return;
   const row = stats.games[gameId];
   row.lastPlayed = Date.now();
   stats.lastGame = gameId;
