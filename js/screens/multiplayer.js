@@ -2,7 +2,7 @@
 
 import { displayName } from '../store.js';
 import { net } from '../net.js';
-import { icon, hydrateIcons, toast } from '../ui.js';
+import { icon, hydrateIcons, toast, esc } from '../ui.js';
 
 export function mount(root, params = {}) {
   const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -29,7 +29,7 @@ export function mount(root, params = {}) {
         <div class="player-slot">
           ${avatar}
           <span class="player-slot__meta">
-            <span class="player-slot__name">${p.name || 'Player'}</span>
+            <span class="player-slot__name">${esc(p.name || 'Player')}</span>
             <span class="player-slot__role">${isHostPlayer ? 'Host' : 'Guest'}</span>
           </span>
           <span class="player-slot__side">${net.playerId === p.id ? 'You' : ''}</span>
@@ -95,7 +95,7 @@ export function mount(root, params = {}) {
             <h2>Join a room</h2>
             <p>Enter the four-character code from the host. The host owns the ball.</p>
             <div class="mp-card__form">
-              <input class="input input--code" id="mpCode" type="text" maxlength="4" placeholder="____" autocomplete="off" />
+              <input class="input input--code" id="mpCode" type="text" maxlength="6" placeholder="______" autocomplete="off" />
               <button type="button" class="btn btn--magenta" data-action="mp-join-create" data-icon="send">Join room</button>
             </div>
             <div class="mp-card__foot"><span data-icon="shield"></span><span>Room codes are per-network. Guests relay paddle input only.</span></div>
@@ -105,9 +105,9 @@ export function mount(root, params = {}) {
   };
 
   const render = () => {
-    hydrateIcons(root);
     if (net.inRoom) renderLobby();
     else renderForm();
+    hydrateIcons(root);
   };
 
   const onAction = async (event) => {
@@ -122,8 +122,8 @@ export function mount(root, params = {}) {
     } else if (action === 'mp-join-create') {
       const name = displayName();
       const codeValue = (root.querySelector('#mpCode')?.value || '').trim().toUpperCase();
-      if (codeValue.length !== 4) {
-        toast('Room codes are four characters.', { type: 'error' });
+      if (!/^[A-HJ-NP-Z2-9]{6}$/.test(codeValue)) {
+        toast('Room codes contain six valid characters.', { type: 'error' });
         return;
       }
       try {
@@ -167,6 +167,12 @@ export function mount(root, params = {}) {
     window.location.hash = `#/play/neon-pong?mode=${net.isHost ? 'host' : 'guest'}`;
   });
   const offNetLeft = net.on('left', () => render());
+  const offNetPeerLeft = net.on('peer-left', ({ reason }) => {
+    render();
+    if (reason === 'host') toast('The host closed the room.', { type: 'error' });
+    else if (reason === 'guest') toast('The other player left the room.', { type: 'info' });
+    else if (reason === 'timeout') toast('The room expired after inactivity.', { type: 'info' });
+  });
   const offNetError = net.on('error', (message) => toast(message || 'The room rejected the request.', { type: 'error' }));
 
   render();
@@ -188,6 +194,7 @@ export function mount(root, params = {}) {
     net.off('players', offNetPlayers);
     net.off('start', offNetStart);
     net.off('left', offNetLeft);
+    net.off('peer-left', offNetPeerLeft);
     net.off('error', offNetError);
   };
 }
