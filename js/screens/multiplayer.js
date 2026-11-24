@@ -185,7 +185,7 @@ export function mount(root, params = {}) {
   }
   if (codeParam) {
     const input = root.querySelector('#mpCode');
-    if (input) input.value = codeParam.toUpperCase();
+    if (input && /^[A-HJ-NP-Z2-9]{6}$/i.test(codeParam)) input.value = codeParam.toUpperCase();
   }
 
   return () => {
