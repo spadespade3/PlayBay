@@ -132,7 +132,7 @@ export function mount(root, params = {}) {
         toast(err?.message || 'Could not join the room.', { type: 'error' });
       }
     } else if (action === 'room-start') {
-      await net.startMatch();
+      if (!net.startMatch()) toast('Could not start the match. Check the room connection.', { type: 'error' });
     } else if (action === 'room-leave' || action === 'room-leave2') {
       net.leave();
       if (window.location.hash.startsWith('#/play/')) return;
@@ -181,7 +181,7 @@ export function mount(root, params = {}) {
   const auto = hashParams.get('auto');
   const codeParam = hashParams.get('code');
   if (intent === 'host' && auto === '1') {
-    net.createRoom(displayName()).catch(() => {});
+    net.createRoom(displayName()).catch((error) => toast(error?.message || 'Could not create the room.', { type: 'error' }));
   }
   if (codeParam) {
     const input = root.querySelector('#mpCode');
