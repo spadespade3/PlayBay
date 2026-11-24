@@ -109,9 +109,9 @@ export function mount(root) {
   };
   root.tabIndex = -1;
   root.innerHTML = `<section class="ps-dashboard">
-    <section class="ps-game-carousel" aria-label="Your games">
+    <section class="ps-game-carousel" aria-label="Your games" aria-description="Use the left and right arrow keys to browse games. Select a game to view its details and play options.">
       <div class="ps-game-carousel__items">${GAMES.map(game => gameTile(game, game.id === selected.id)).join('')}<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid')}</span><small>GAME LIBRARY</small></a></div>
-      <div class="ps-game-carousel__caption"><span class="ps-platform-mark">PB</span><strong>${safe(selected.title)}</strong><small>${selected.available ? 'READY TO PLAY' : 'IN DEVELOPMENT'}</small></div>
+      <div class="ps-game-carousel__caption" aria-live="polite" aria-atomic="true"><span class="ps-platform-mark">PB</span><strong>${safe(selected.title)}</strong><small>${selected.available ? 'READY TO PLAY' : 'IN DEVELOPMENT'}</small></div>
     </section>
     ${hero(selected, stats)}
     ${activityCards(getTotals(), stats)}
