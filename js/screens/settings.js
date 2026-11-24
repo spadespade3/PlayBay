@@ -180,7 +180,8 @@ export function mount(root) {
   const onToggle = (event) => {
     const input = event.target;
     if (!input || input.type !== 'checkbox') return;
-    saveSettings({ [input.dataset.setting]: input.checked });
+    const key = input.dataset.setting;
+    saveSettings({ [key]: key === 'motion' ? (input.checked ? 'full' : 'reduced') : input.checked });
   };
   const onVolume = (event) => {
     const input = event.target;
