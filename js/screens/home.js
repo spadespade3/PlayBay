@@ -15,6 +15,7 @@ function gameTile(game, selected) {
 
 function hero(game, stats) {
   const available = game.available;
+  const gameIndex = Math.max(0, GAMES.findIndex((item) => item.id === game.id)) + 1;
   const lastPlayed = stats.lastGame === game.id;
   const activity = lastPlayed ? `Last played · ${safe((stats.lastMode || 'cpu').toUpperCase())}` : (available ? game.tagline : 'In development · Preview the game');
   const action = available
@@ -31,7 +32,7 @@ function hero(game, stats) {
       <p class="ps-hero__activity">${safe(activity)}</p>
       <div class="ps-hero__actions">${action}<a class="ps-secondary-action" href="#/game/${safe(game.id)}">GAME DETAILS</a><a class="ps-more-action" href="#/game/${safe(game.id)}" aria-label="More options">···</a></div>
     </div>
-    <div class="ps-hero__side-note"><span>PLAYBAY ORIGINALS</span><strong>01</strong><small>/ ${String(GAMES.length).padStart(2,'0')}</small></div>
+    <div class="ps-hero__side-note"><span>PLAYBAY ORIGINALS</span><strong>${String(gameIndex).padStart(2,'0')}</strong><small>/ ${String(GAMES.length).padStart(2,'0')}</small></div>
   </section>`;
 }
 
@@ -115,13 +116,19 @@ export function mount(root) {
     const nextIndex = (currentIndex + direction + GAMES.length) % GAMES.length;
     selectGame(GAMES[nextIndex].id, true);
   };
+  const onFocus = (event) => {
+    const tile = event.target.closest('[data-select-game]');
+    if (tile) selectGame(tile.dataset.selectGame, false);
+  };
   root.addEventListener('click', onClick);
   root.addEventListener('keydown', onKey);
+  root.addEventListener('focusin', onFocus);
   root.focus({ preventScroll: true });
   hydrateIcons(root);
   return () => {
     root.removeEventListener('click', onClick);
     root.removeEventListener('keydown', onKey);
+    root.removeEventListener('focusin', onFocus);
   };
 }
 
