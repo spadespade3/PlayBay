@@ -233,12 +233,12 @@ export function mount(root, params = {}) {
 
   const keyDirection = (side) => {
     if (side === 1) {
-      const up = pressedKeys.has('ArrowUp');
-      const down = pressedKeys.has('ArrowDown');
+      const up = pressedKeys.has('ArrowUp') || (mode === 'guest' && pressedKeys.has('KeyW'));
+      const down = pressedKeys.has('ArrowDown') || (mode === 'guest' && pressedKeys.has('KeyS'));
       return up === down ? 0 : up ? -1 : 1;
     }
-    const up = pressedKeys.has('KeyW');
-    const down = pressedKeys.has('KeyS');
+    const up = pressedKeys.has('KeyW') || (mode !== 'local' && pressedKeys.has('ArrowUp'));
+    const down = pressedKeys.has('KeyS') || (mode !== 'local' && pressedKeys.has('ArrowDown'));
     return up === down ? 0 : up ? -1 : 1;
   };
   const applyKeyMovement = (side) => {
@@ -291,7 +291,8 @@ export function mount(root, params = {}) {
   };
   const onWindowBlur = () => {
     pressedKeys.clear();
-    engine.setPaddleDir(playerSide, 0);
+    engine.setPaddleDir(0, 0);
+    engine.setPaddleDir(1, 0);
     if (mode === 'guest') net.sendInput(undefined, { dir: 0 });
   };
 
