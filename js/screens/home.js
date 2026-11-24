@@ -68,17 +68,28 @@ export function mount(root) {
     const holder = document.createElement('div');
     holder.innerHTML = hero(selected, getStats());
     if (current) current.replaceWith(holder.firstElementChild);
+    hydrateIcons(root);
   };
-  const renderTiles = () => {
+  const renderTiles = (restoreFocus = false) => {
     const row = root.querySelector('.ps-game-carousel__items');
     if (row) row.innerHTML = GAMES.map(game => gameTile(game, game.id === selected.id)).join('') +
-      `<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid-3x3')}</span><small>GAME LIBRARY</small></a>`;
+      `<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid')}</span><small>GAME LIBRARY</small></a>`;
+    const caption = root.querySelector('.ps-game-carousel__caption');
+    if (caption) caption.innerHTML = `<span class="ps-platform-mark">PB</span><strong>${safe(selected.title)}</strong><small>${selected.available ? 'READY TO PLAY' : 'IN DEVELOPMENT'}</small>`;
     hydrateIcons(root);
+    if (restoreFocus) root.querySelector(`[data-select-game="${selected.id}"]`)?.focus();
+  };
+  const selectGame = (id, restoreFocus = false) => {
+    const next = findGame(id);
+    if (!next || next.id === selected.id) return;
+    selected = next;
+    renderTiles(restoreFocus);
+    renderHero();
   };
   root.innerHTML = `<section class="ps-dashboard">
     <section class="ps-game-carousel" aria-label="Your games">
       <div class="ps-game-carousel__items">${GAMES.map(game => gameTile(game, game.id === selected.id)).join('')}<a class="ps-library-tile" href="#/library" aria-label="Open full game library"><span>${icon('grid-3x3')}</span><small>GAME LIBRARY</small></a></div>
-      <div class="ps-carousel-hint"><span>←</span> SELECT A GAME <span>→</span></div>
+      <div class="ps-game-carousel__caption"><span class="ps-platform-mark">PB</span><strong>${safe(selected.title)}</strong><small>${selected.available ? 'READY TO PLAY' : 'IN DEVELOPMENT'}</small></div>
     </section>
     ${hero(selected, stats)}
     ${activityCards(getTotals(), stats)}
@@ -86,11 +97,7 @@ export function mount(root) {
   const onClick = event => {
     const tile = event.target.closest('[data-select-game]');
     if (!tile) return;
-    const next = findGame(tile.dataset.selectGame);
-    if (!next || next.id === selected.id) return;
-    selected = next;
-    renderTiles();
-    renderHero();
+    selectGame(tile.dataset.selectGame);
   };
   const onKey = event => {
     if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
@@ -100,8 +107,7 @@ export function mount(root) {
       if (index < 0) return;
       event.preventDefault();
       const next = tiles[Math.max(0, Math.min(tiles.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)))];
-      next?.focus();
-      next?.click();
+      if (next) selectGame(next.dataset.selectGame, true);
     }
   };
   root.addEventListener('click', onClick);
