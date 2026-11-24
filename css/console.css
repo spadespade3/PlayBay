@@ -319,3 +319,87 @@ html { scroll-behavior:smooth; }
   ::view-transition-old(pb-featured-scene),
   ::view-transition-new(pb-featured-scene) {animation:none!important}
 }
+
+
+/* Apple Design Skill application: accessible focus, adaptable targets and calmer fallbacks. */
+.playbay-console :focus-visible {
+  outline: 3px solid #d92332;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.92);
+}
+.playbay-console .ps-icon-link {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 4px;
+}
+.playbay-console .ps-mainnav .navlink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 14px;
+}
+.playbay-console .ps-game-tile {
+  min-width: 44px;
+  min-height: 44px;
+}
+.playbay-console .ps-game-tile:focus-visible {
+  position: relative;
+  z-index: 3;
+  outline-offset: 5px;
+}
+.playbay-console .ps-more-action {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+}
+.playbay-console .ps-secondary-action,
+.playbay-console .ps-primary-action {
+  min-height: 44px;
+}
+.playbay-console .ps-overline,
+.playbay-console .ps-hero__eyebrow,
+.playbay-console .ps-game-carousel__caption small,
+.playbay-console .ps-hero__side-note small {
+  font-size: max(11px, 1em);
+  line-height: 1.4;
+}
+.playbay-console .ps-activity-card p,
+.playbay-console .ps-hero__tagline,
+.playbay-console .ps-hero__activity {
+  line-height: 1.55;
+}
+@media (prefers-contrast: more) {
+  .playbay-console {
+    --line: rgba(25,25,25,.42);
+    --line-strong: rgba(25,25,25,.72);
+  }
+  .playbay-console .ps-game-tile:not(.is-selected) { opacity: 1; filter: none; }
+  .playbay-console .ps-activity-card,
+  .playbay-console .ps-continue-card,
+  .playbay-console .ps-game-tile { border-color: currentColor; }
+  .playbay-console .ps-overline,
+  .playbay-console .ps-hero__activity { color: inherit; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .playbay-console .topbar,
+  .playbay-console .ps-hero__scrim,
+  .playbay-console .ps-activity-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (max-width: 620px) {
+  .playbay-console .ps-activity-grid { grid-template-columns: minmax(0,1fr); }
+  .playbay-console .ps-continue-card { grid-column: auto; }
+  .playbay-console .ps-icon-link { width: 40px; min-width: 40px; }
+}
+@media (max-width: 360px) {
+  .playbay-console .ps-topbar__right { gap: 5px; }
+  .playbay-console .ps-mainnav { gap: 8px; }
+  .playbay-console .ps-mainnav .navlink { padding-inline: 8px; }
+}
