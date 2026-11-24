@@ -543,6 +543,7 @@ function handleMessage(client, message) {
         ...(message.y != null ? { y: Math.min(824, Math.max(76, y)) } : {}),
         ...(message.dir != null ? { dir } : {}),
         ...(message.velocity != null ? { velocity: Math.min(2600, Math.max(-2600, velocity)) } : {}),
+        ...(message.release === true ? { release: true } : {}),
         from: client.id,
       });
       return;
