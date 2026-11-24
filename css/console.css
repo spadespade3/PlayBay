@@ -403,3 +403,31 @@ html { scroll-behavior:smooth; }
   .playbay-console .ps-mainnav { gap: 8px; }
   .playbay-console .ps-mainnav .navlink { padding-inline: 8px; }
 }
+
+
+/* Readability pass: raise secondary copy above the tiny decorative-label scale. */
+.playbay-console .ps-record-stat small,
+.playbay-console .ps-game-carousel__caption small,
+.playbay-console .ps-hero__side-note small,
+.playbay-console .ps-text-link {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.playbay-console .ps-record-stat small,
+.playbay-console .ps-game-carousel__caption small {
+  color: rgba(255,255,255,.76);
+}
+.playbay-console .ps-friends-card p {
+  font-size: 14px;
+  color: rgba(255,255,255,.78);
+}
+.playbay-console .ps-hero__activity {
+  font-size: 13px;
+  color: rgba(255,255,255,.78);
+}
+.playbay-console .ps-card-mark {
+  color: rgba(255,255,255,.58);
+}
+.playbay-console .ps-status-dot {
+  animation-iteration-count: 2;
+}
