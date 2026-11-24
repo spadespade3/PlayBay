@@ -3,65 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f5f2">
-  <meta name="description" content="PlayBay — a pixel-red local multiplayer arcade. One platform, many games, endless party fun.">
-  <title>PlayBay · Pixel Arcade</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f5f5f2'/%3E%3Cpath d='M18 46V18h15a9 9 0 0 1 0 18h-8v10z' fill='%23d92332'/%3E%3Ccircle cx='45' cy='23' r='5' fill='%23d92332'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#111111">
+  <meta name="description" content="PlayBay — a console-style local multiplayer arcade. One platform, many games, endless party fun.">
+  <title>PlayBay · Games</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f5f5f2'/%3E%3Cpath d='M17 48V16h17a10 10 0 0 1 0 20H26v12z' fill='%23df2636'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/core.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/screens.css">
   <link rel="stylesheet" href="css/console.css">
 </head>
-<body>
+<body class="playbay-console">
   <a class="skip-link" href="#view">Skip to content</a>
-
-  <div class="bg" aria-hidden="true">
-    <div class="bg__glow bg__glow--cyan"></div>
-    <div class="bg__glow bg__glow--magenta"></div>
-    <div class="bg__stars"></div>
-    <div class="bg__floor"><span></span></div>
-    <div class="bg__scan"></div>
-    <div class="bg__vignette"></div>
-  </div>
-
+  <div class="bg" aria-hidden="true"></div>
   <canvas id="fx" class="fx" aria-hidden="true"></canvas>
-
-  <header class="topbar">
-    <a class="brand" href="#/home" data-nav-link aria-label="PlayBay home">
-      <span class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32"><path d="M8 25V7h8.5a5.6 5.6 0 0 1 0 11.2H13V25z" fill="currentColor"/><circle cx="23.5" cy="9.5" r="2.6" fill="#ff2d95"/></svg>
-      </span>
+  <header class="topbar ps-topbar">
+    <a class="brand ps-brand" href="#/home" data-nav-link aria-label="PlayBay home">
+      <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 25V7h8.5a5.6 5.6 0 0 1 0 11.2H13V25z" fill="currentColor"/><circle cx="23.5" cy="9.5" r="2.6" fill="#fff"/></svg></span>
       <span class="brand__word">PLAY<span>BAY</span></span>
     </a>
-
-    <nav class="mainnav" aria-label="Primary">
-      <a class="navlink" data-nav-link href="#/home"><span data-icon="home"></span><span>Home</span></a>
-      <a class="navlink" data-nav-link href="#/library"><span data-icon="grid"></span><span>Library</span></a>
-      <a class="navlink" data-nav-link href="#/multiplayer"><span data-icon="users"></span><span>Multiplayer</span></a>
-      <a class="navlink" data-nav-link href="#/settings"><span data-icon="gear"></span><span>Settings</span></a>
+    <nav class="mainnav ps-mainnav" aria-label="Primary">
+      <a class="navlink is-active" data-nav-link href="#/home"><span>Games</span></a>
+      <a class="navlink" data-nav-link href="#/library"><span>Media</span></a>
     </nav>
-
-    <div class="topbar__right">
-      <div class="conn" id="connPill" data-state="local" title="Multiplayer server status">
-        <span class="conn__dot" aria-hidden="true"></span>
-        <span class="conn__text" id="connText">Local play</span>
-      </div>
-      <a class="profile" href="#/settings" data-nav-link aria-label="Player profile and settings">
-        <span class="profile__avatar" id="profileAvatar">P</span>
-        <span class="profile__name" id="profileName">Player One</span>
-      </a>
+    <div class="topbar__right ps-topbar__right">
+      <a class="ps-icon-link" href="#/library" data-nav-link aria-label="Search games" title="Search games"><span data-icon="search"></span></a>
+      <a class="ps-icon-link" href="#/settings" data-nav-link aria-label="Settings" title="Settings"><span data-icon="settings"></span></a>
+      <a class="profile ps-profile" href="#/settings" data-nav-link aria-label="Player profile and settings"><span class="profile__avatar" id="profileAvatar">P</span><span class="profile__name" id="profileName">Player One</span><span class="ps-online-dot" aria-label="Local profile"></span></a>
+      <time class="ps-clock" id="psClock" aria-label="Current time"></time>
     </div>
   </header>
-
   <main id="view" class="view" tabindex="-1" aria-live="polite"></main>
-
   <div id="toasts" class="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
   <div id="modalRoot"></div>
-
-  <noscript>
-    <div style="padding:40px;color:#e9edff;font-family:system-ui">PlayBay needs JavaScript enabled to run.</div>
-  </noscript>
-
+  <noscript><div style="padding:40px;color:#191919;font-family:system-ui">PlayBay needs JavaScript enabled to run.</div></noscript>
   <script type="module" src="js/app.js"></script>
+  <script>
+    (() => {
+      const clock = document.getElementById('psClock');
+      const update = () => { if (clock) clock.textContent = new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date()); };
+      update(); setInterval(update, 30000);
+    })();
+  </script>
 </body>
 </html>
