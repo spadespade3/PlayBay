@@ -90,6 +90,7 @@ export function mount(root) {
     apply();
   };
 
+  apply();
   root.querySelector('#librarySearch').addEventListener('input', onInput);
   chipsRow.addEventListener('click', onChip);
 
