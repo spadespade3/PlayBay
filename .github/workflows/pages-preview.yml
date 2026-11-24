@@ -32,14 +32,16 @@ jobs:
         run: npm run check
       - name: Run regression tests
         run: npm test
-      - name: Configure GitHub Pages
+      - name: Configure GitHub Pages (optional preview deployment)
+        id: pages
+        continue-on-error: true
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Upload static site
+        if: steps.pages.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
       - name: Deploy preview
+        if: steps.pages.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
