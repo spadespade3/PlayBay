@@ -441,6 +441,7 @@ function leaveRoom(client) {
 }
 
 function handleMessage(client, message) {
+  if (client.room) client.room.lastActivity = Date.now();
   switch (message.type) {
     case 'create': {
       if (rooms.size >= MAX_ROOMS) {
