@@ -396,9 +396,8 @@ export class PongEngine {
   }
 
   restart() {
-    const wasPaused = this.paused;
     this.reset(false);
-    this.paused = wasPaused;
+    this.paused = false;
   }
 
   updateFx(dt) {
