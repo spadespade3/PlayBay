@@ -170,7 +170,11 @@ export function mount(root) {
       const value = input.closest('.volume-row')?.querySelector('.range-value');
       if (value) value.textContent = Math.round(Number(input.value) * 100) + '%';
     });
-    root.querySelectorAll('[data-diff]').forEach(button => button.classList.toggle('is-active', button.dataset.diff === settings.difficulty); button.setAttribute('aria-pressed', String(button.dataset.diff === settings.difficulty));
+    root.querySelectorAll('[data-diff]').forEach(button => {
+      const active = button.dataset.diff === settings.difficulty;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
   };
 
   const onName = (event) => {
