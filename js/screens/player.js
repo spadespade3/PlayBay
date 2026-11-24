@@ -73,6 +73,8 @@ export function mount(root, params = {}) {
   let overlayKind = null;
   let overlaySignature = '';
   let lastSent = 0;
+  let lastInputSent = 0;
+  let queuedInput = null;
   let networkError = '';
   let pointerDragging = false;
   let pointerId = null;
@@ -136,6 +138,17 @@ export function mount(root, params = {}) {
 
   const playerSide = mode === 'guest' ? 1 : 0;
   const pointerSide = playerSide;
+  const sendGuestInput = (y, options = {}, immediate = false) => {
+    if (mode !== 'guest') return;
+    const now = performance.now();
+    if (immediate || now - lastInputSent >= 16) {
+      net.sendInput(y, options);
+      lastInputSent = now;
+      queuedInput = null;
+    } else {
+      queuedInput = { y, options };
+    }
+  };
   const paddleFor = (side) => side === 0 ? engine.p1 : engine.p2;
 
   const firePause = () => {
@@ -245,7 +258,7 @@ export function mount(root, params = {}) {
     const direction = keyDirection(side);
     if (mode === 'guest') {
       engine.setPaddleDir(1, direction);
-      net.sendInput(undefined, { dir: direction });
+      sendGuestInput(undefined, { dir: direction }, true);
     } else {
       engine.setPaddleDir(side, direction);
     }
@@ -293,7 +306,8 @@ export function mount(root, params = {}) {
     pressedKeys.clear();
     engine.setPaddleDir(0, 0);
     engine.setPaddleDir(1, 0);
-    if (mode === 'guest') net.sendInput(undefined, { dir: 0 });
+    if (pointerDragging) onPointerUp({ pointerId });
+    if (mode === 'guest') sendGuestInput(undefined, { dir: 0 }, true);
   };
 
   let pointerDragging = false;
@@ -316,7 +330,7 @@ export function mount(root, params = {}) {
     lastPointerAt = performance.now();
     const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
     engine.setPaddleTarget(pointerSide, clamped);
-    if (mode === 'guest') net.sendInput(clamped);
+    if (mode === 'guest') sendGuestInput(clamped, {}, true);
   };
   const onPointerMove = (event) => {
     if (!pointerDragging || (pointerId !== null && event.pointerId !== pointerId)) return;
@@ -329,7 +343,7 @@ export function mount(root, params = {}) {
     const paddle = paddleFor(pointerSide);
     const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
     engine.setPaddleTarget(pointerSide, clamped, velocity);
-    if (mode === 'guest') net.sendInput(clamped, { velocity });
+    if (mode === 'guest') sendGuestInput(clamped, { velocity });
   };
   const onPointerUp = (event) => {
     if (!pointerDragging || (pointerId !== null && event.pointerId !== pointerId)) return;
@@ -340,7 +354,7 @@ export function mount(root, params = {}) {
     paddle.pointerSpeed = null;
     paddle.target = null;
     paddle.vy = 0;
-    if (mode === 'guest') net.sendInput(paddle.y, { release: true });
+    if (mode === 'guest') sendGuestInput(paddle.y, { release: true }, true);
   };
 
   const readGamepad = () => {
@@ -373,6 +387,11 @@ export function mount(root, params = {}) {
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     readGamepad();
+    if (queuedInput && now - lastInputSent >= 16) {
+      net.sendInput(queuedInput.y, queuedInput.options);
+      queuedInput = null;
+      lastInputSent = now;
+    }
     engine.update(dt);
 
     const events = engine.drainEvents();
