@@ -85,7 +85,7 @@ export class PongEngine {
       target: null,
       vy: 0,
       speed: 1040,
-      pointerSpeed: 0,
+      pointerSpeed: null,
     };
     this.p2 = {
       y: PONG.H / 2,
@@ -94,7 +94,7 @@ export class PongEngine {
       target: null,
       vy: 0,
       speed: this.mode === 'cpu' || this.mode === 'host' ? DIFFICULTY[this.difficulty].speed : 1040,
-      pointerSpeed: 0,
+      pointerSpeed: null,
     };
     this.ball = {
       x: PONG.W / 2,
@@ -108,18 +108,20 @@ export class PongEngine {
     this.hasState = this.mode !== 'guest';
   }
 
-  setPaddleTarget(side, y, pointerVelocity = 0) {
+  setPaddleTarget(side, y, pointerVelocity = null) {
     const paddle = side === 0 ? this.p1 : this.p2;
     paddle.dir = 0;
     paddle.target = clamp(Number(y) || 0, paddle.h / 2, PONG.H - paddle.h / 2);
-    paddle.pointerSpeed = clamp(Number(pointerVelocity) || 0, -2600, 2600);
-    if (Math.abs(paddle.pointerSpeed) > 20) paddle.speed = Math.max(420, Math.abs(paddle.pointerSpeed));
+    paddle.pointerSpeed = pointerVelocity == null
+      ? null
+      : clamp(Number(pointerVelocity) || 0, -2600, 2600);
   }
 
   setPaddleDir(side, dir) {
     const paddle = side === 0 ? this.p1 : this.p2;
     const next = Math.sign(dir || 0);
     paddle.dir = next;
+    paddle.pointerSpeed = null;
     if (next !== 0) paddle.target = null;
   }
 
@@ -200,18 +202,24 @@ export class PongEngine {
       paddle.target = null;
     } else if (paddle.target != null) {
       const diff = paddle.target - paddle.y;
-      const followSpeed = paddle.pointerSpeed ? Math.max(420, Math.abs(paddle.pointerSpeed)) : paddle.speed * 1.9;
+      const pointerControlled = paddle.pointerSpeed !== null;
+      const measuredVelocity = pointerControlled ? paddle.pointerSpeed : null;
+      const followSpeed = pointerControlled ? Math.max(420, Math.abs(measuredVelocity)) : paddle.speed * 1.9;
       const step = followSpeed * dt;
       if (Math.abs(diff) <= step) {
         paddle.y = paddle.target;
-        paddle.vy = paddle.pointerSpeed;
+        paddle.vy = measuredVelocity ?? 0;
       } else {
-        paddle.vy = Math.sign(diff) * followSpeed;
-        paddle.y += paddle.vy * dt;
+        paddle.y += Math.sign(diff) * step;
+        paddle.vy = measuredVelocity ?? Math.sign(diff) * followSpeed;
+      }
+      if (pointerControlled) {
+        paddle.pointerSpeed *= Math.exp(-dt * 9);
+        if (Math.abs(paddle.pointerSpeed) < 28) paddle.pointerSpeed = null;
       }
     } else {
       paddle.vy *= 0.82;
-      paddle.pointerSpeed = 0;
+      paddle.pointerSpeed = null;
     }
 
     const min = paddle.h / 2;
@@ -245,6 +253,7 @@ export class PongEngine {
       target = PONG.H / 2 + (ball.y - PONG.H / 2) * cfg.returnRatio * 0.4;
     }
 
+    p.pointerSpeed = null;
     p.target = clamp(target, p.h / 2, PONG.H - p.h / 2);
     this.movePaddle(p, dt);
   }
@@ -294,11 +303,13 @@ export class PongEngine {
     const angle = rel * 1.02;
     const dragBoost = clamp(Math.abs(paddle.vy) * 0.2, 0, 420);
     const nextSpeed = Math.min(PONG.MAX_SPEED, Math.max(PONG.BASE_SPEED, b.speed * 1.055 + 14 + dragBoost));
-    b.speed = nextSpeed;
-    b.vx = Math.cos(angle) * nextSpeed * dir;
-    b.vy = Math.sin(angle) * nextSpeed + paddle.vy * 0.28;
-    const maxVy = nextSpeed * 0.92;
-    b.vy = clamp(b.vy, -maxVy, maxVy);
+    const rawVx = Math.cos(angle) * nextSpeed * dir;
+    const rawVy = Math.sin(angle) * nextSpeed + paddle.vy * 0.28;
+    const rawMagnitude = Math.max(1, Math.hypot(rawVx, rawVy));
+    const finalSpeed = Math.min(PONG.MAX_SPEED, rawMagnitude);
+    b.speed = finalSpeed;
+    b.vx = rawVx / rawMagnitude * finalSpeed;
+    b.vy = rawVy / rawMagnitude * finalSpeed;
     this.rally += 1;
     this.shake = Math.min(10, 3 + nextSpeed / 260);
     this.event('paddle', { side: dir > 0 ? 0 : 1, speed: Math.round(nextSpeed) });
@@ -436,7 +447,20 @@ export class PongEngine {
   }
 
   applySnapshot(snap) {
-    if (!snap || !Array.isArray(snap.b)) return;
+    const valid =
+      snap && typeof snap === 'object' && !Array.isArray(snap) &&
+      Array.isArray(snap.b) && snap.b.length === 2 &&
+      snap.b.every((value) => Number.isFinite(value) && value >= -100 && value <= PONG.W + 100) &&
+      Number.isFinite(snap.p1) && snap.p1 >= PONG.PADDLE_H / 2 && snap.p1 <= PONG.H - PONG.PADDLE_H / 2 &&
+      Array.isArray(snap.s) && snap.s.length === 2 &&
+      snap.s.every((value) => Number.isInteger(value) && value >= 0 && value <= this.target) &&
+      ['countdown', 'point', 'play', 'over'].includes(snap.ph) &&
+      Number.isFinite(snap.cd) && snap.cd >= 0 && snap.cd <= PONG.COUNTDOWN &&
+      Number.isInteger(snap.rl) && snap.rl >= 0 && snap.rl <= 10000 &&
+      [-1, 0, 1].includes(snap.w) && typeof snap.pz === 'boolean' &&
+      Number.isInteger(snap.e) && snap.e >= 0 &&
+      Number.isFinite(snap.v) && snap.v >= 0 && snap.v <= PONG.MAX_SPEED;
+    if (!valid) return false;
     this.hasState = true;
     this.lastSnap = snap;
     this.snapBuffer.push({ t: performance.now(), snap });
@@ -449,6 +473,7 @@ export class PongEngine {
     this.rally = Number(snap.rl) || 0;
     this.paused = Boolean(snap.pz);
     this.ball.speed = Number(snap.v) || 0;
+    return true;
   }
 
   guestUpdate(dt) {
