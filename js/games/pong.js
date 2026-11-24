@@ -438,6 +438,7 @@ export class PongEngine {
       ph: this.phase,
       cd: Math.round(this.countdown * 100) / 100,
       rl: this.rally,
+      mr: this.maxRally,
       w: this.winner,
       pz: this.paused,
       e: this.epoch,
@@ -456,6 +457,7 @@ export class PongEngine {
       ['countdown', 'point', 'play', 'over'].includes(snap.ph) &&
       Number.isFinite(snap.cd) && snap.cd >= 0 && snap.cd <= PONG.COUNTDOWN &&
       Number.isInteger(snap.rl) && snap.rl >= 0 && snap.rl <= 10000 &&
+      (snap.mr == null || (Number.isInteger(snap.mr) && snap.mr >= snap.rl && snap.mr <= 10000)) &&
       [-1, 0, 1].includes(snap.w) && typeof snap.pz === 'boolean' &&
       Number.isInteger(snap.e) && snap.e >= 0 &&
       Number.isFinite(snap.v) && snap.v >= 0 && snap.v <= PONG.MAX_SPEED;
@@ -470,6 +472,7 @@ export class PongEngine {
     this.countdown = Number(snap.cd) || 0;
     this.winner = typeof snap.w === 'number' ? snap.w : -1;
     this.rally = Number(snap.rl) || 0;
+    this.maxRally = Math.max(this.rally, Number(snap.mr) || 0);
     this.paused = Boolean(snap.pz);
     this.ball.speed = Number(snap.v) || 0;
     return true;
