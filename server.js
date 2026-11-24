@@ -19,6 +19,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ROOT = __dirname;
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MAX_PAYLOAD = 64 * 1024;
+const MAX_FRAGMENTS = 256;
 const MAX_CLIENTS = 64;
 const MAX_ROOMS = 128;
 const ROOM_CODE_LENGTH = 6;
@@ -218,6 +219,7 @@ class Client {
     this.buffer = Buffer.alloc(0);
     this.fragments = null;
     this.fragmentOpcode = 0x1;
+    this.fragmentCount = 0;
     this.name = 'Player';
     this.room = null;
     this.isHost = false;
@@ -225,6 +227,7 @@ class Client {
     this.closed = false;
 
     socket.setNoDelay(true);
+    socket.setTimeout(45000, () => this.terminate());
     socket.on('data', (chunk) => this.onData(chunk));
     socket.on('close', () => this.onClose());
     socket.on('error', () => this.onClose());
@@ -347,6 +350,7 @@ class Client {
       if (!fin) {
         this.fragments = [payload];
         this.fragmentOpcode = opcode;
+        this.fragmentCount = 1;
         return;
       }
       this.onMessage(payload);
@@ -354,6 +358,11 @@ class Client {
     }
 
     if (opcode === 0x0 && this.fragments) {
+      this.fragmentCount += 1;
+      if (this.fragmentCount > MAX_FRAGMENTS) {
+        this.terminate();
+        return;
+      }
       this.fragments.push(payload);
       const total = this.fragments.reduce((n, b) => n + b.length, 0);
       if (total > MAX_PAYLOAD) {
@@ -363,6 +372,7 @@ class Client {
       if (fin) {
         const full = Buffer.concat(this.fragments);
         this.fragments = null;
+        this.fragmentCount = 0;
         this.onMessage(full);
       }
       return;
