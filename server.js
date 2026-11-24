@@ -575,6 +575,7 @@ function handleMessage(client, message) {
           !Number.isFinite(state.cd) || state.cd < 0 || state.cd > 10 ||
           ![-1, 0, 1].includes(state.w) ||
           !Number.isInteger(state.rl) || state.rl < 0 || state.rl > 10000 ||
+          (state.mr != null && (!Number.isInteger(state.mr) || state.mr < state.rl || state.mr > 10000)) ||
           !Number.isFinite(state.v) || state.v < 0 || state.v > 2000 ||
           !Number.isInteger(state.e) || state.e < 0) return;
       sendTo(room, { type: 'state', state }, client);
