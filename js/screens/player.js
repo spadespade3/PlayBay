@@ -262,19 +262,46 @@ export function mount(root, params = {}) {
       engine.setPaddleDir(side, 0);
     }
   };
-  const onPointer = (event) => {
+  let pointerDragging = false;
+  let lastPointerY = 0;
+  let lastPointerAt = 0;
+  const pointerSide = () => (mode === 'guest' ? 1 : 0);
+  const pointerY = event => {
     const rect = canvas.getBoundingClientRect();
-    const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * H;
-    const paddle = paddleFor(mode === 'guest' ? 1 : 0);
+    return ((event.clientY - rect.top) / Math.max(1, rect.height)) * H;
+  };
+  const onPointerDown = event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    pointerDragging = true;
+    canvas.setPointerCapture?.(event.pointerId);
+    const y = pointerY(event), paddle = paddleFor(pointerSide());
+    lastPointerY = y; lastPointerAt = performance.now();
     const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
-    const side = mode === 'guest' ? 1 : 0;
-    engine.setPaddleTarget(side, clamped);
+    engine.setPaddleTarget(pointerSide(), clamped);
     if (mode === 'guest') net.sendInput(clamped);
   };
-
+  const onPointerMove = event => {
+    if (!pointerDragging) return;
+    const y = pointerY(event), now = performance.now();
+    const dt = Math.max(0.008, (now - lastPointerAt) / 1000);
+    const velocity = (y - lastPointerY) / dt;
+    lastPointerY = y; lastPointerAt = now;
+    const paddle = paddleFor(pointerSide());
+    const clamped = Math.min(H - paddle.h / 2, Math.max(paddle.h / 2, y));
+    engine.setPaddleTarget(pointerSide(), clamped, velocity);
+    if (mode === 'guest') net.sendInput(clamped);
+  };
+  const onPointerUp = event => {
+    pointerDragging = false;
+    try { canvas.releasePointerCapture?.(event.pointerId); } catch {}
+    paddleFor(pointerSide()).pointerSpeed = 0;
+  };
   root.addEventListener('keydown', onKeyDown);
   root.addEventListener('keyup', onKeyUp);
-  root.addEventListener('pointerdown', onPointer);
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
 
   const renderFrame = (now) => {
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
@@ -332,7 +359,10 @@ export function mount(root, params = {}) {
     ro.disconnect();
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('keyup', onKeyUp);
-    root.removeEventListener('pointerdown', onPointer);
+    canvas.removeEventListener('pointerdown', onPointerDown);
+    canvas.removeEventListener('pointermove', onPointerMove);
+    canvas.removeEventListener('pointerup', onPointerUp);
+    canvas.removeEventListener('pointercancel', onPointerUp);
     overlay.removeEventListener('click', fireOverlayAction);
     overlayActions?.removeEventListener('click', fireOverlayAction);
     pauseButton?.removeEventListener('click', firePause);
