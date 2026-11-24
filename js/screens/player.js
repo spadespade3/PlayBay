@@ -310,10 +310,6 @@ export function mount(root, params = {}) {
     if (mode === 'guest') sendGuestInput(undefined, { dir: 0 }, true);
   };
 
-  let pointerDragging = false;
-  let pointerId = null;
-  let lastPointerY = 0;
-  let lastPointerAt = 0;
   const pointerY = (event) => {
     const rect = canvas.getBoundingClientRect();
     return ((event.clientY - rect.top) / Math.max(1, rect.height)) * H;
