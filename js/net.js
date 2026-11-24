@@ -124,6 +124,7 @@ class NetClient {
 
       ws.addEventListener('close', () => {
         clearTimeout(timer);
+        if (this.pending) this.pending.reject(new Error('The connection closed before the room request completed.'));
         this.ws = null;
         this.connectPromise = null;
         const wasRoom = this.inRoom;
@@ -211,6 +212,7 @@ class NetClient {
           ...(Number.isFinite(Number(message.y)) ? { y: Number(message.y) } : {}),
           ...(message.dir === -1 || message.dir === 0 || message.dir === 1 ? { dir: message.dir } : {}),
           ...(Number.isFinite(Number(message.velocity)) ? { velocity: Number(message.velocity) } : {}),
+          ...(message.release === true ? { release: true } : {}),
         });
         break;
       case 'event':
@@ -282,6 +284,7 @@ class NetClient {
     if (Number.isFinite(Number(y))) message.y = Number(y);
     if (options && (options.dir === -1 || options.dir === 0 || options.dir === 1)) message.dir = options.dir;
     if (options && Number.isFinite(Number(options.velocity))) message.velocity = Number(options.velocity);
+    if (options?.release === true) message.release = true;
     return this.send(message);
   }
 
