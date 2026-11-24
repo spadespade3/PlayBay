@@ -156,10 +156,27 @@ export function mount(root) {
   const applySettings = () => {
     settings = getSettings();
     const nameInput = root.querySelector('#settingsName');
-    if (nameInput) nameInput.value = settings.name;
+    if (nameInput && document.activeElement !== nameInput) nameInput.value = settings.name;
+    const previewName = root.querySelector('.name-preview__name');
+    if (previewName) previewName.textContent = settings.name || 'Player';
+    const previewAvatar = root.querySelector('.name-preview .avatar');
+    if (previewAvatar) previewAvatar.textContent = (settings.name || 'P').trim().charAt(0).toUpperCase();
+    root.querySelectorAll('[data-setting]').forEach(input => input.checked = Boolean(settings[input.dataset.setting]));
+    root.querySelectorAll('[data-vol]').forEach(input => {
+      input.value = String(settings[input.dataset.vol] ?? 0);
+      const value = input.closest('.volume-row')?.querySelector('.range-value');
+      if (value) value.textContent = Math.round(Number(input.value) * 100) + '%';
+    });
+    root.querySelectorAll('[data-diff]').forEach(button => button.classList.toggle('is-active', button.dataset.diff === settings.difficulty));
   };
 
-  const onName = (event) => saveSettings({ name: event.target.value });
+  const onName = (event) => {
+    saveSettings({ name: event.target.value });
+    const previewName = root.querySelector('.name-preview__name');
+    if (previewName) previewName.textContent = event.target.value || 'Player';
+    const previewAvatar = root.querySelector('.name-preview .avatar');
+    if (previewAvatar) previewAvatar.textContent = (event.target.value || 'P').trim().charAt(0).toUpperCase();
+  };
   const onToggle = (event) => {
     const input = event.target;
     if (!input || input.type !== 'checkbox') return;
@@ -195,8 +212,11 @@ export function mount(root) {
   root.addEventListener('input', (event) => {
     const target = event.target;
     if (target.id === 'settingsName') onName({ target });
-    else if (target.dataset.setting) onToggle({ target });
-    else if (target.dataset.vol) onVolume({ target });
+    else if (target.dataset.vol) {
+      onVolume({ target });
+      const value = target.closest('.volume-row')?.querySelector('.range-value');
+      if (value) value.textContent = Math.round(Number(target.value) * 100) + '%';
+    }
   });
   root.addEventListener('change', (event) => {
     const target = event.target;
