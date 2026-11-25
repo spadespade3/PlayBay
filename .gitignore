@@ -1,28 +1,6 @@
-# OS
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Env / secrets
-.env
-.env.local
-.env.*.local
-
-# Editor
-.vscode/
+.gradle/
+**/build/
+.local.properties
 .idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Temp
-tmp/
-temp/
+*.iml
+.DS_Store
