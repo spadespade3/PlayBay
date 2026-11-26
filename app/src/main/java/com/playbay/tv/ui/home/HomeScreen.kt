@@ -56,10 +56,16 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val playFocus = remember { FocusRequester() }
-    LaunchedEffect(playFocus) {
+    LaunchedEffect(playFocus, state.featured) {
+        if (state.featured == null) return@LaunchedEffect
         // Retry only during the startup handoff, and stop as soon as focus lands.
         repeat(8) {
-            if (playFocus.requestFocus()) return@LaunchedEffect
+            val acquired = try {
+                playFocus.requestFocus()
+            } catch (_: IllegalStateException) {
+                false
+            }
+            if (acquired) return@LaunchedEffect
             delay(150)
         }
     }
