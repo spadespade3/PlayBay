@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "PlayBay"
 include(":app")
+include(":connect-tv")
+include(":connect-mobile")
