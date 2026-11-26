@@ -57,12 +57,10 @@ fun HomeScreen(
 ) {
     val playFocus = remember { FocusRequester() }
     LaunchedEffect(playFocus) {
-        // The first request lands before the window owns input focus and gets
-        // cleared by the handoff. Repeat across the launch window so a later
-        // attempt sticks once focus is real.
+        // Retry only during the startup handoff, and stop as soon as focus lands.
         repeat(8) {
-            runCatching { playFocus.requestFocus() }
-            delay(200)
+            if (playFocus.requestFocus()) return@LaunchedEffect
+            delay(150)
         }
     }
 
