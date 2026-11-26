@@ -55,11 +55,9 @@ fun SettingsPanel(onClose: () -> Unit) {
 
     LaunchedEffect(closeFocus) {
         revealed = true
-        // Same launch-window handoff inside the dialog: repeat briefly so a
-        // request that lands before the dialog window owns focus is not lost.
         repeat(6) {
-            runCatching { closeFocus.requestFocus() }
-            delay(160)
+            if (closeFocus.requestFocus()) return@LaunchedEffect
+            delay(120)
         }
     }
 
