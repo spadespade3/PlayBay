@@ -46,9 +46,12 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import io.ktor.websocket.close
 import io.ktor.websocket.send
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,8 +71,10 @@ private fun ControllerScreen() {
     var host by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Enter the TV address and pairing code.") }
+    var statusColor by remember { mutableStateOf(Color(0xFFCACAD4)) }
     var session by remember { mutableStateOf<DefaultClientWebSocketSession?>(null) }
     var connecting by remember { mutableStateOf(false) }
+    var sending by remember { mutableStateOf(false) }
 
     DisposableEffect(client) {
         onDispose {
@@ -140,10 +145,12 @@ private fun ControllerScreen() {
                                 }
                                 session = newSession
                                 status = "Connected! Send your first message."
+                                statusColor = Color(0xFF68E6A2)
                             } catch (error: CancellationException) {
                                 throw error
                             } catch (error: Exception) {
                                 status = error.message ?: "Connection failed. Check the address and code."
+                                statusColor = Color(0xFFFF6B6B)
                             } finally {
                                 connecting = false
                             }
@@ -159,19 +166,52 @@ private fun ControllerScreen() {
                 Button(
                     onClick = {
                         scope.launch {
+                            sending = true
+                            status = "Sending message to PlayBay TV..."
+                            statusColor = Color(0xFFFFB347)
                             try {
-                                session?.send(Frame.Text("""{"type":"HOW_ARE_YOU"}"""))
-                                status = "Message sent to PlayBay TV."
+                                val activeSession = session ?: error("Not connected to a TV.")
+                                activeSession.send(Frame.Text("""{"type":"HOW_ARE_YOU"}"""))
+                                val ackFrame = withTimeoutOrNull(5_000) { activeSession.incoming.receive() }
+                                if (ackFrame == null) {
+                                    status = "Message failed: the TV did not acknowledge it."
+                                    statusColor = Color(0xFFFF6B6B)
+                                } else if (ackFrame is Frame.Text) {
+                                    val ack = JSONObject(ackFrame.readText())
+                                    if (ack.optString("type") == "ACK" &&
+                                        ack.optString("request") == "HOW_ARE_YOU"
+                                    ) {
+                                        val count = ack.optInt("count", 0)
+                                        status = if (count > 0) {
+                                            "TV received your message! ($count)"
+                                        } else {
+                                            "TV received your message!"
+                                        }
+                                        statusColor = Color(0xFF68E6A2)
+                                    } else {
+                                        status = "Message failed: unexpected TV response."
+                                        statusColor = Color(0xFFFF6B6B)
+                                    }
+                                } else {
+                                    status = "Message failed: invalid TV response."
+                                    statusColor = Color(0xFFFF6B6B)
+                                }
+                            } catch (error: CancellationException) {
+                                throw error
                             } catch (error: Exception) {
                                 status = "Message failed: ${error.message ?: "connection lost"}"
+                                statusColor = Color(0xFFFF6B6B)
                                 session = null
+                            } finally {
+                                sending = false
                             }
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(62.dp),
+                    enabled = !sending,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4057)),
                 ) {
-                    Text("HOW ARE YOU?", fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+                    Text(if (sending) "SENDING..." else "HOW ARE YOU?", fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
                 }
                 Spacer(Modifier.height(10.dp))
                 Button(
@@ -180,6 +220,7 @@ private fun ControllerScreen() {
                             session?.close()
                             session = null
                             status = "Disconnected."
+                            statusColor = Color(0xFFCACAD4)
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -196,7 +237,7 @@ private fun ControllerScreen() {
                     .fillMaxWidth()
                     .background(Color(0xFF17171F), RoundedCornerShape(14.dp))
                     .padding(16.dp),
-                color = Color(0xFFCACAD4),
+                color = statusColor,
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
             )

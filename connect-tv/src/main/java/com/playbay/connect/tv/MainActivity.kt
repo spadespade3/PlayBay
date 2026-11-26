@@ -36,6 +36,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
+import io.ktor.server.application.install
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,7 +49,7 @@ private const val SERVER_PORT = 8765
 
 class MainActivity : ComponentActivity() {
     private var connected by mutableStateOf(false)
-    private var response by mutableStateOf("Waiting for a phone to connect…")
+    private var messageCount by mutableStateOf(0)
     private var serverStatus by mutableStateOf("Starting local server…")
     private var socketServer: TvSocketServer? = null
 
@@ -59,8 +60,8 @@ class MainActivity : ComponentActivity() {
             onConnectionChanged = { isConnected ->
                 runOnUiThread { connected = isConnected }
             },
-            onMessage = { message ->
-                runOnUiThread { response = message }
+            onMessage = { _, count ->
+                runOnUiThread { messageCount = count }
             },
             onError = { error ->
                 runOnUiThread { serverStatus = error }
@@ -141,16 +142,35 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         Spacer(Modifier.height(28.dp))
-                        Text(
-                            text = response,
-                            modifier = Modifier
-                                .background(Color(0xFF17171F), RoundedCornerShape(16.dp))
-                                .padding(horizontal = 32.dp, vertical = 22.dp),
-                            color = if (response == "Full of pixels!") Color(0xFF68E6A2) else Color.White,
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(0.72f),
+                            color = if (messageCount > 0) Color(0xFF10231A) else Color(0xFF17171F),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (messageCount > 0) Color(0xFF68E6A2) else Color(0xFF2A2A34),
+                            ),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 32.dp, vertical = 22.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(
+                                    text = if (messageCount == 0) "Waiting for a phone message..." else "Full of pixels!",
+                                    color = if (messageCount > 0) Color(0xFF68E6A2) else Color.White,
+                                    fontSize = if (messageCount > 0) 40.sp else 30.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    text = "Messages received: $messageCount",
+                                    color = if (messageCount > 0) Color(0xFF68E6A2) else Color(0xFF777786),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
                         Spacer(Modifier.height(16.dp))
                         Text(serverStatus, color = Color(0xFF777786), fontSize = 13.sp)
                     }
@@ -180,11 +200,12 @@ private fun localIpv4Address(): String? = try {
 
 private class TvSocketServer(
     private val onConnectionChanged: (Boolean) -> Unit,
-    private val onMessage: (String) -> Unit,
+    private val onMessage: (String, Int) -> Unit,
     private val onError: (String) -> Unit,
 ) {
     private val random = SecureRandom()
     val pairingCode: String = (100000 + random.nextInt(900000)).toString()
+    private var messageCount = 0
     private var engine: EmbeddedServer<*, *>? = null
 
     fun start() {
@@ -206,9 +227,18 @@ private class TvSocketServer(
                                 if (frame is Frame.Text) {
                                     val payload = JSONObject(frame.readText())
                                     if (payload.optString("type") == "HOW_ARE_YOU") {
+                                        val reply = "Full of pixels!"
+                                        val count: Int
                                         withContext(Dispatchers.Main) {
-                                            onMessage("Full of pixels!")
+                                            messageCount++
+                                            count = messageCount
+                                            onMessage(reply, count)
                                         }
+                                        send(
+                                            Frame.Text(
+                                                """{"type":"ACK","request":"HOW_ARE_YOU","count":$count,"message":"$reply"}"""
+                                            )
+                                        )
                                     }
                                 }
                             }
