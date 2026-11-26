@@ -56,7 +56,12 @@ fun SettingsPanel(onClose: () -> Unit) {
     LaunchedEffect(closeFocus) {
         revealed = true
         repeat(6) {
-            if (closeFocus.requestFocus()) return@LaunchedEffect
+            val acquired = try {
+                closeFocus.requestFocus()
+            } catch (_: IllegalStateException) {
+                false
+            }
+            if (acquired) return@LaunchedEffect
             delay(120)
         }
     }
