@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.PlayBay" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/playbay_ink</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorAccent">@color/playbay_red</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+</resources>
