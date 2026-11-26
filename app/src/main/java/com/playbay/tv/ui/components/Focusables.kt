@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -34,11 +34,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -88,7 +83,8 @@ fun FocusableCard(
                 scaleY = scale
             }
             .clip(shape)
-            .drawBehind {
+            .drawWithContent {
+                drawContent()
                 if (glow > 0.01f) {
                     drawRoundRect(
                         brush = Brush.radialGradient(
@@ -106,18 +102,6 @@ fun FocusableCard(
             .border(width = 2.dp, color = border, shape = shape)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged { state -> onFocusChanged?.invoke(state.isFocused) }
-            .onKeyEvent { event ->
-                if (event.type == KeyEventType.KeyUp &&
-                    (event.key == Key.Enter ||
-                        event.key == Key.DirectionCenter ||
-                        event.key == Key.Spacebar)
-                ) {
-                    onClick()
-                    true
-                } else {
-                    false
-                }
-            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

@@ -56,13 +56,17 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val playFocus = remember { FocusRequester() }
-    LaunchedEffect(playFocus) {
-        // The first request lands before the window owns input focus and gets
-        // cleared by the handoff. Repeat across the launch window so a later
-        // attempt sticks once focus is real.
+    LaunchedEffect(playFocus, state.featured) {
+        if (state.featured == null) return@LaunchedEffect
+        // Retry only during the startup handoff, and stop as soon as focus lands.
         repeat(8) {
-            runCatching { playFocus.requestFocus() }
-            delay(200)
+            val acquired = try {
+                playFocus.requestFocus()
+            } catch (_: IllegalStateException) {
+                false
+            }
+            if (acquired) return@LaunchedEffect
+            delay(150)
         }
     }
 
@@ -78,11 +82,13 @@ fun HomeScreen(
             TopBar(onOpenSettings = onOpenSettings)
             Spacer(Modifier.height(20.dp))
 
-            FeaturedSection(
-                game = state.featured,
-                onPlay = { onPlay(state.featured) },
-                playFocus = playFocus,
-            )
+            state.featured?.let { featured ->
+                FeaturedSection(
+                    game = featured,
+                    onPlay = { onPlay(featured) },
+                    playFocus = playFocus,
+                )
+            } ?: EmptyLibraryMessage()
 
             Spacer(Modifier.height(20.dp))
             SectionHeader(
@@ -90,16 +96,20 @@ fun HomeScreen(
                 trailing = state.games.size.toString().padStart(2, '0') + " titles",
             )
             Spacer(Modifier.height(12.dp))
-            LibraryRow(
-                games = state.games,
-                onGameFocused = onGameFocused,
-                onPlay = onPlay,
-            )
+            if (state.games.isNotEmpty()) {
+                LibraryRow(
+                    games = state.games,
+                    onGameFocused = onGameFocused,
+                    onPlay = onPlay,
+                )
+            }
 
             Spacer(Modifier.height(18.dp))
-            SectionHeader(title = "Recently played", trailing = "Local history")
+            SectionHeader(title = "Recently played", trailing = "Preview")
             Spacer(Modifier.height(10.dp))
-            RecentRow(recentlyPlayed = state.recentlyPlayed, onPlay = onPlay)
+            if (state.recentlyPlayed.isNotEmpty()) {
+                RecentRow(recentlyPlayed = state.recentlyPlayed, onPlay = onPlay)
+            }
         }
 
         Box(
@@ -263,5 +273,25 @@ private fun SectionHeader(title: String, trailing: String) {
             letterSpacing = (-0.2).sp,
         )
         Eyebrow(text = trailing, color = PlayBayColors.Dim)
+    }
+}
+
+
+@Composable
+private fun EmptyLibraryMessage() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(268.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(PlayBayColors.InkRaised)
+            .padding(28.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "Your library is empty. Add games to get started.",
+            color = PlayBayColors.Muted,
+            fontSize = 18.sp,
+        )
     }
 }

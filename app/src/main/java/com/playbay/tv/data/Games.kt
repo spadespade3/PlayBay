@@ -67,8 +67,8 @@ object PlayBayCatalog {
     fun game(id: String): Game = byId.getValue(id)
 
     val recentlyPlayed: List<RecentGame> = listOf(
-        RecentGame(byId.getValue("arcade"), "Demo session · 2d ago"),
-        RecentGame(byId.getValue("racing"), "Demo session · 4d ago"),
-        RecentGame(byId.getValue("block-world"), "Demo session · 6d ago"),
+        RecentGame(byId.getValue("arcade"), "Preview session"),
+        RecentGame(byId.getValue("racing"), "Preview session"),
+        RecentGame(byId.getValue("block-world"), "Preview session"),
     )
 }
