@@ -19,8 +19,8 @@ data class HomeUiState(
     val featuredId: String = PlayBayCatalog.games.first().id,
     val message: String? = null,
 ) {
-    val featured: Game
-        get() = games.firstOrNull { it.id == featuredId } ?: games.first()
+    val featured: Game?
+        get() = games.firstOrNull { it.id == featuredId } ?: games.firstOrNull()
 }
 
 class HomeViewModel : ViewModel() {
@@ -29,10 +29,18 @@ class HomeViewModel : ViewModel() {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private var messageJob: Job? = null
+    private var featuredJob: Job? = null
 
     fun onGameFocused(gameId: String) {
         if (_uiState.value.featuredId == gameId) return
-        _uiState.update { state -> state.copy(featuredId = gameId) }
+        featuredJob?.cancel()
+        featuredJob = viewModelScope.launch {
+            delay(180)
+            _uiState.update { state ->
+                if (state.games.any { it.id == gameId }) state.copy(featuredId = gameId)
+                else state
+            }
+        }
     }
 
     fun onPlayPressed(game: Game) {
