@@ -6,11 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.playbay.tv.data.Game
 import com.playbay.tv.connect.LauncherConnectionViewModel
 import com.playbay.tv.connect.PairingScreen
 import com.playbay.tv.connect.ReconnectBar
@@ -27,6 +29,12 @@ fun PlayBayApp(
     val homeState by homeViewModel.uiState.collectAsState()
     val connection by connectionViewModel.state.collectAsState()
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
+
+    // Stable lambda references so the launcher subtrees can skip recomposition
+    // when the state they read has not changed.
+    val onGameFocused = remember(homeViewModel) { { id: String -> homeViewModel.onGameFocused(id) } }
+    val onPlay = remember(homeViewModel) { { game: Game -> homeViewModel.onPlayPressed(game) } }
+    val onOpenSettings = remember { { settingsOpen = true } }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (!connection.hasPaired) {
@@ -46,9 +54,9 @@ fun PlayBayApp(
             // reset focus, scroll position, or highlighted game.
             HomeScreen(
                 state = homeState,
-                onGameFocused = homeViewModel::onGameFocused,
-                onPlay = homeViewModel::onPlayPressed,
-                onOpenSettings = { settingsOpen = true },
+                onGameFocused = onGameFocused,
+                onPlay = onPlay,
+                onOpenSettings = onOpenSettings,
             )
 
             PhoneNavigationEffect(enabled = true)

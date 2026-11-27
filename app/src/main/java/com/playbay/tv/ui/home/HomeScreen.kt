@@ -24,12 +24,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -39,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import com.playbay.tv.data.Game
 import com.playbay.tv.ui.components.Eyebrow
 import com.playbay.tv.ui.components.FocusableCard
@@ -56,13 +64,20 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val playFocus = remember { FocusRequester() }
+    val windowInfo = LocalWindowInfo.current
+    var playFocused by remember { mutableStateOf(false) }
     LaunchedEffect(playFocus) {
-        // The first request lands before the window owns input focus and gets
-        // cleared by the handoff. Repeat across the launch window so a later
-        // attempt sticks once focus is real.
-        repeat(8) {
+        // Ask only once the window owns input focus, then stop as soon as the
+        // Play button actually receives it. The old 8 x 200 ms retry loop kept
+        // hammering requestFocus() for 1.6 s after the button had already won
+        // focus, which churned the focus system on every launch.
+        snapshotFlow { windowInfo.isWindowFocused }.first { it }
+        repeat(6) {
+            if (playFocused) return@LaunchedEffect
             runCatching { playFocus.requestFocus() }
-            delay(200)
+            withFrameNanos { }
+            if (playFocused) return@LaunchedEffect
+            delay(80)
         }
     }
 
@@ -80,8 +95,9 @@ fun HomeScreen(
 
             FeaturedSection(
                 game = state.featured,
-                onPlay = { onPlay(state.featured) },
+                onPlay = { onPlay(state.focused) },
                 playFocus = playFocus,
+                onPlayFocusChanged = { playFocused = it },
             )
 
             Spacer(Modifier.height(20.dp))

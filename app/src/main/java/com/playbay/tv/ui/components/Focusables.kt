@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -34,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -70,12 +72,15 @@ fun FocusableCard(
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
         label = "focusScale",
     )
-    val border by animateColorAsState(
+    // State objects are held as state (not read via `by` at composition) so the
+    // animation only invalidates the draw phase below instead of recomposing the
+    // whole card — and its content — on every animation frame.
+    val borderState = animateColorAsState(
         targetValue = if (focused) focusedBorderColor else borderColor,
         animationSpec = tween(durationMillis = 140),
         label = "focusBorder",
     )
-    val glow by animateFloatAsState(
+    val glowState = animateFloatAsState(
         targetValue = if (focused) 1f else 0f,
         animationSpec = tween(durationMillis = 220),
         label = "focusGlow",
@@ -88,22 +93,35 @@ fun FocusableCard(
                 scaleY = scale
             }
             .clip(shape)
-            .drawBehind {
-                if (glow > 0.01f) {
+            .drawWithCache {
+                val glowRadius = size.maxDimension * 0.62f
+                val glowBrush = Brush.radialGradient(
+                    colors = listOf(glowColor.copy(alpha = 0.10f), Color.Transparent),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = glowRadius,
+                )
+                val glowCorner = CornerRadius(24.dp.toPx())
+                val borderWidth = 2.dp.toPx()
+                val inset = borderWidth / 2f
+                onDrawBehind {
+                    val glow = glowState.value
+                    if (glow > 0.01f) {
+                        drawRoundRect(
+                            brush = glowBrush,
+                            cornerRadius = glowCorner,
+                            alpha = glow,
+                        )
+                    }
+                    val border = borderState.value
                     drawRoundRect(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                glowColor.copy(alpha = 0.10f * glow),
-                                Color.Transparent,
-                            ),
-                            center = center,
-                            radius = size.maxDimension * 0.62f,
-                        ),
-                        cornerRadius = CornerRadius(24.dp.toPx()),
+                        color = border,
+                        topLeft = Offset(inset, inset),
+                        size = Size(size.width - borderWidth, size.height - borderWidth),
+                        cornerRadius = CornerRadius(glowCorner.x - inset, glowCorner.y - inset),
+                        style = Stroke(width = borderWidth),
                     )
                 }
             }
-            .border(width = 2.dp, color = border, shape = shape)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged { state -> onFocusChanged?.invoke(state.isFocused) }
             .onKeyEvent { event ->
@@ -144,7 +162,7 @@ fun TvButton(
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
         label = "buttonScale",
     )
-    val background by animateColorAsState(
+    val backgroundState = animateColorAsState(
         targetValue = when {
             primary && focused -> PlayBayColors.White
             primary -> PlayBayColors.Red
@@ -159,7 +177,7 @@ fun TvButton(
         animationSpec = tween(durationMillis = 150),
         label = "buttonContent",
     )
-    val borderColor by animateColorAsState(
+    val borderColorState = animateColorAsState(
         targetValue = when {
             focused -> PlayBayColors.White
             primary -> Color.Transparent
@@ -177,8 +195,17 @@ fun TvButton(
             }
             .height(50.dp)
             .clip(shape)
-            .background(background)
-            .border(width = 2.dp, color = borderColor, shape = shape)
+            .drawBehind {
+                drawRoundRect(color = backgroundState.value, cornerRadius = CornerRadius(0f, 0f))
+                val borderWidth = 2.dp.toPx()
+                drawRoundRect(
+                    color = borderColorState.value,
+                    topLeft = Offset(borderWidth / 2f, borderWidth / 2f),
+                    size = Size(size.width - borderWidth, size.height - borderWidth),
+                    cornerRadius = CornerRadius(0f, 0f),
+                    style = Stroke(width = borderWidth),
+                )
+            }
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .clickable(
                 interactionSource = interactionSource,

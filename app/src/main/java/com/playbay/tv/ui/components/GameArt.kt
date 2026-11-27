@@ -6,17 +6,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas as SkiaCanvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.playbay.tv.data.GameArtStyle
 import com.playbay.tv.ui.theme.PlayBayColors
+import kotlin.math.roundToInt
+
+/** Hardware texture ceiling for a cached plate, in pixels per axis. */
+private const val MaxArtDimension = 2048
+
+/** Total bytes of cached plates kept alive before the least recent is evicted. */
+private const val RasterBudgetBytes = 24 * 1024 * 1024
 
 /**
- * Original placeholder artwork, drawn from primitives at the size it lands in.
- * Nothing here is a bitmap, so it stays sharp on every panel and adds no APK weight.
+ * Original placeholder artwork, drawn from primitives.
+ *
+ * The vector pass costs 20-90 path builds depending on the style, which is fine
+ * once but not once per frame — and everything animated here (hero crossfade,
+ * card focus scale) re-records its subtree while it animates. So each style is
+ * rasterised once per pixel size into a shared texture and drawn as that
+ * texture afterwards. Redrawing becomes one textured quad; the vector pass runs
+ * only when a size it has not seen before appears.
  */
 @Composable
 fun GameArt(
@@ -24,13 +40,80 @@ fun GameArt(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier) {
-        when (style) {
-            GameArtStyle.Demo -> drawDemoArt()
-            GameArtStyle.Arcade -> drawArcadeArt()
-            GameArtStyle.BlockWorld -> drawBlockWorldArt()
-            GameArtStyle.Racing -> drawRacingArt()
+        val width = size.width.roundToInt().coerceIn(0, MaxArtDimension)
+        val height = size.height.roundToInt().coerceIn(0, MaxArtDimension)
+        val plate = if (width >= 8 && height >= 8) {
+            ArtRaster.obtain(style, width, height, this)
+        } else {
+            null
+        }
+        if (plate != null) drawImage(plate) else drawArt(style)
+    }
+}
+
+private fun DrawScope.drawArt(style: GameArtStyle) {
+    when (style) {
+        GameArtStyle.Demo -> drawDemoArt()
+        GameArtStyle.Arcade -> drawArcadeArt()
+        GameArtStyle.BlockWorld -> drawBlockWorldArt()
+        GameArtStyle.Racing -> drawRacingArt()
+    }
+}
+
+/**
+ * Shared, size-keyed texture cache for [GameArt]. Access-ordered so the plates
+ * currently on screen survive eviction; a plate is re-rasterised on the next
+ * draw if it was dropped.
+ */
+private object ArtRaster {
+
+    private val plates = LinkedHashMap<Long, ImageBitmap>(16, 0.75f, true)
+    private var residentBytes = 0
+    private var rasterFailed = false
+
+    fun obtain(style: GameArtStyle, width: Int, height: Int, scope: DrawScope): ImageBitmap? {
+        if (rasterFailed) return null
+
+        val key = key(style, width, height)
+        plates[key]?.let { return it }
+
+        return try {
+            val bitmap = ImageBitmap(width, height)
+            CanvasDrawScope().draw(
+                density = scope,
+                layoutDirection = scope.layoutDirection,
+                canvas = SkiaCanvas(bitmap),
+                size = Size(width.toFloat(), height.toFloat()),
+            ) {
+                drawArt(style)
+            }
+            plates[key] = bitmap
+            residentBytes += width * height * 4
+            trim(width * height * 4)
+            bitmap
+        } catch (error: Throwable) {
+            // No texture memory to spare: fall back to the vector pass for good.
+            rasterFailed = true
+            null
         }
     }
+
+    private fun trim(incomingBytes: Int) {
+        val iterator = plates.entries.iterator()
+        while (residentBytes > RasterBudgetBytes && iterator.hasNext()) {
+            val entry = iterator.next()
+            if (plates.keys.lastOrNull() == entry.key) break
+            residentBytes -= entry.value.width * entry.value.height * 4
+            iterator.remove()
+        }
+        if (residentBytes > RasterBudgetBytes && incomingBytes > RasterBudgetBytes) {
+            plates.clear()
+            residentBytes = 0
+        }
+    }
+
+    private fun key(style: GameArtStyle, width: Int, height: Int): Long =
+        (style.ordinal.toLong() shl 48) or (width.toLong() shl 24) or height.toLong()
 }
 
 private fun DrawScope.drawDemoArt() {

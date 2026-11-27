@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -46,6 +47,7 @@ fun FeaturedSection(
     game: Game,
     onPlay: () -> Unit,
     playFocus: FocusRequester,
+    onPlayFocusChanged: ((Boolean) -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
@@ -69,12 +71,14 @@ fun FeaturedSection(
                 FeaturedCopy(featured)
             }
             Spacer(Modifier.height(16.dp))
-            TvButton(
-                text = "Play",
-                onClick = onPlay,
-                focusRequester = playFocus,
-                showPlayGlyph = true,
-            )
+            Box(Modifier.onFocusChanged { onPlayFocusChanged?.invoke(it.isFocused) }) {
+                TvButton(
+                    text = "Play",
+                    onClick = onPlay,
+                    focusRequester = playFocus,
+                    showPlayGlyph = true,
+                )
+            }
         }
 
         Crossfade(
