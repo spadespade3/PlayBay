@@ -81,15 +81,12 @@ fun FeaturedSection(
             }
         }
 
-        Crossfade(
-            targetState = game,
+        Box(
             modifier = Modifier
                 .weight(1.04f)
                 .fillMaxHeight(),
-            animationSpec = tween(260),
-            label = "featuredArt",
-        ) { featured ->
-            FeaturedArt(featured)
+        ) {
+            FeaturedArt(game)
         }
     }
 }

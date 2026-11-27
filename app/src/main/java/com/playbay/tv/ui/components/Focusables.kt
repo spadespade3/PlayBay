@@ -67,7 +67,9 @@ fun FocusableCard(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
-    val scale by animateFloatAsState(
+    // Held as a state object (not read via `by`) so the scale animation
+    // invalidates only the graphics layer, not the whole composable.
+    val scaleState = animateFloatAsState(
         targetValue = if (focused) focusedScale else 1f,
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
         label = "focusScale",
@@ -89,8 +91,8 @@ fun FocusableCard(
     Box(
         modifier = modifier
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                scaleX = scaleState.value
+                scaleY = scaleState.value
             }
             .clip(shape)
             .drawWithCache {
@@ -157,7 +159,7 @@ fun TvButton(
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     val shape = RoundedCornerShape(3.dp)
-    val scale by animateFloatAsState(
+    val scaleState = animateFloatAsState(
         targetValue = if (focused) 1.045f else 1f,
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
         label = "buttonScale",
@@ -190,8 +192,8 @@ fun TvButton(
     Row(
         modifier = modifier
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                scaleX = scaleState.value
+                scaleY = scaleState.value
             }
             .height(50.dp)
             .clip(shape)

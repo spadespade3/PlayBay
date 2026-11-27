@@ -1,9 +1,12 @@
 package com.playbay.tv.data
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Placeholder library entry. Artwork is generated in-app from [artStyle], so the
  * project ships no bitmap assets and no third-party game art.
  */
+@Immutable
 data class Game(
     val id: String,
     val title: String,
@@ -20,6 +23,7 @@ enum class GameArtStyle {
     Racing,
 }
 
+@Immutable
 data class RecentGame(
     val game: Game,
     val playedLabel: String,

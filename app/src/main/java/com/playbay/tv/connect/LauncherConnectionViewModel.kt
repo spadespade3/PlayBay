@@ -1,6 +1,7 @@
 package com.playbay.tv.connect
 
 import android.app.Application
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@Immutable
 data class ConnectionState(
     val phoneConnected: Boolean = false,
     /** True once a phone has paired at least once this process, so we stop showing the gate. */

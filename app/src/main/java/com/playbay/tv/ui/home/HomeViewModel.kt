@@ -1,5 +1,6 @@
 package com.playbay.tv.ui.home
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.playbay.tv.data.Game
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class HomeUiState(
     val games: List<Game> = PlayBayCatalog.games,
     val recentlyPlayed: List<RecentGame> = PlayBayCatalog.recentlyPlayed,
