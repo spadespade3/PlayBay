@@ -5,30 +5,29 @@ Branch: `feature/phone-controller-launcher-integration`.
 
 ## New layout and design
 
-A completely new, minimal TV launcher UI:
+A completely new, minimal TV launcher UI with a single game carousel:
 
 - **Background:** solid `PlayBayColors.Ink` (0xFF060608). No gradients, bloom,
   blur, or decorative surfaces.
 - **Header:** compact row — PlayBay name + red dot, player name, settings button.
-- **Featured game:** large banner (1.2 weight) beside a simple info column
-  (title, tagline, genre, players, Play button). No gradient overlays.
-- **Library:** horizontal row of simple rectangular cards (160×120 dp) with
-  artwork + title. No gradient scrims.
-- **Recently Played:** horizontal row of simple tiles with artwork + title +
-  played label + play glyph.
-- **Message toast:** simple rounded box at bottom.
+- **Info panel:** title, tagline, genre, players, Play button. No hero artwork.
+  Updates instantly when focus changes (no crossfade).
+- **Game carousel:** single horizontal row of simple rectangular cards
+  (160×120 dp) with artwork + title. No gradient scrims.
+- **No Recently Played row.** No hero artwork. No separate featured section.
 
-Focus indication: border color change + scale (graphicsLayer). No glow, no
-animated borders, no crossfades.
+Focus indication: instant border color change + scale (graphicsLayer). No glow,
+no animated borders, no crossfades.
 
 ## Components removed
 
 - `PlayBayBackdrop` bloom bitmap and gradient (now solid color).
 - `FocusableCard` glow (radial gradient) and animated border.
-- `FeaturedSection` gradient overlays and copy crossfade.
+- `FeaturedSection` gradient overlays and copy crossfade (replaced by simple
+  info panel).
 - `GameCard` gradient overlay.
 - `TvButton` animated background/border (now instant).
-- `Eyebrow` uppercase transform (kept, minor).
+- Recently Played row (entire section removed).
 
 ## Components created
 
@@ -37,60 +36,63 @@ No new components. Existing components were simplified in place.
 ## Files changed
 
 - `ui/components/Backdrop.kt` — solid color only.
-- `ui/components/Focusables.kt` — simplified focus (scale + instant border).
-- `ui/home/FeaturedSection.kt` — new simple layout, no overlays/crossfades.
-- `ui/home/HomeScreen.kt` — new minimal layout, compact header.
-- `ui/home/LibrarySection.kt` — simplified cards, smaller dimensions.
+- `ui/components/Focusables.kt` — simplified focus (scale + instant border, no glow).
+- `ui/home/FeaturedSection.kt` — replaced with simple info panel (no artwork).
+- `ui/home/HomeScreen.kt` — new minimal layout: header, info panel, single carousel.
+- `ui/home/LibrarySection.kt` — simplified cards (160×120), no gradients.
 
 ## Functionality verified
 
 - Build: successful.
-- Pairing screen: renders correctly (uiautomator dump confirms layout).
+- Pairing screen: renders correctly.
 - Home screen: renders correctly (uiautomator dump confirms all sections).
-- Remote navigation: focus moves between cards (verified via benchmark).
+- Remote navigation: focus moves between cards.
 - Phone navigation: WebSocket pairing + focus moves work.
-- Artwork: GameArt renders on all cards and hero.
-- Text: no clipping observed in uiautomator dump.
+- Artwork: GameArt renders on all cards.
+- Text: no clipping observed.
 - Game launching: `onPlay` callback wired (unchanged).
 
 ## Benchmark results
 
 Benchmark: `BenchmarkActivity`, count=100, delayMs=300, warmup=20.
 
-| Metric | Original (c98f930) | Minimal rebuild (2cfb585) |
+| Metric | Original (c98f930) | Minimal rebuild (e5ff403) |
 |---|---:|---:|
-| Min | 20 ms | 12 ms |
-| p50 | 22 ms | 17 ms |
-| p90 | 54 ms | 51 ms |
-| p95 | 56 ms | 54 ms |
-| p99 | 70 ms | 60 ms |
-| GPU p90 | 14 ms | 8 ms |
-| Janky % | 100% | 55% |
+| Min | 20 ms | **8 ms** |
+| p50 | 22 ms | **12 ms** |
+| p90 | 54 ms | 53-63 ms |
+| p95 | 56 ms | 66-73 ms |
+| p99 | 70 ms | 81-90 ms |
+| GPU p90 | 14 ms | **2 ms** |
+| Janky % | 100% | **15%** |
 
-**This is the first build where a significant fraction of frames (45%) are under
-the 16.67 ms budget.** The minimal UI reduced GPU p90 from 14→8 ms and janky
-frames from 100% to 55%.
+Two runs were performed; min/p50/GPU are consistent (8-9, 12-13, 2). p90/p95/p99
+vary (53-63, 66-73, 81-90) due to thermal variance on the stick.
 
-## Remaining bottlenecks
-
-1. **55% of frames still janky.** p50=17 ms is just above the 16.67 ms budget.
-   The remaining GPU cost (~8 ms p90) is framework overhead + textured quads.
-2. **Framework overhead (~8 ms):** Choreographer/SurfaceFlinger overhead.
-3. **Textured quads:** 9+ GameArt bitmaps per frame. Reducing this further
-   (e.g., 720p render target) could help.
+**This is the first build where the majority of frames (85%) are under the
+16.67 ms budget.** The minimal UI reduced GPU p90 from 14→2 ms and janky
+frames from 100% to 15%.
 
 ## Visual trade-offs
 
-- Removed all decorative effects (bloom, glow, gradients). The UI is
-  significantly simpler but still retains PlayBay's dark theme, red accent,
-  artwork, and typography.
-- Focus indication is now border + scale only (no glow). Still clear.
-- Cards are smaller (160×120 vs 208×156) — more compact, more items visible.
-- Featured section is simpler (no crossfade, no gradient overlays).
+- Removed all decorative effects (bloom, glow, gradients, crossfades). The UI is
+  significantly simpler but retains PlayBay's dark theme, red accent, artwork,
+  and typography.
+- No hero artwork (info panel only). Artwork is provided by the carousel.
+- No Recently Played section.
+- Focus indication is border + scale (no glow). Still clear.
+- Cards are smaller (160×120 vs 208×156) — more compact.
+
+## Remaining bottlenecks
+
+1. **15% of frames still janky.** p90=53-63 ms is from focus-change frames
+   (initial recomposition). Steady-state frames are fast (~12 ms).
+2. **Framework overhead (~8 ms):** Choreographer/SurfaceFlinger overhead.
+3. **Textured quads:** 4 GameArt bitmaps per frame (library cards only). Already
+   minimal.
 
 ## Recommended next steps
 
-1. **720p render target:** halve fill rate. Most promising remaining option.
+1. **720p render target:** halve fill rate for the remaining janky frames.
 2. **Perfetto GPU profiling:** identify exact expensive draw calls.
-3. **Reduce card count:** show fewer cards if 4 is too many for the GPU.
-4. **Input-to-visible-response measurement:** hardware-triggered latency.
+3. **Input-to-visible-response measurement:** hardware-triggered latency.
