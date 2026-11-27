@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,45 +30,34 @@ import androidx.compose.ui.unit.sp
 import com.playbay.tv.data.Game
 import com.playbay.tv.data.PlayBayCatalog
 import com.playbay.tv.data.RecentGame
-import com.playbay.tv.ui.components.Eyebrow
 import com.playbay.tv.ui.components.FocusableCard
 import com.playbay.tv.ui.components.GameArt
 import com.playbay.tv.ui.components.PlayGlyph
 import com.playbay.tv.ui.theme.PlayBayColors
 
-/**
- * The library viewport carries 8 dp of padding above and below the cards so the
- * focused card's scale and glow are not clipped by the lazy row. The -8 dp offset
- * keeps the first card aligned to the 56 dp page edge.
- */
 @Composable
 fun LibraryRow(
     onGameFocused: (String) -> Unit,
     onPlay: (Game) -> Unit,
-    // Experiment A: when true, unfocused cards show a solid placeholder
-    // instead of their GameArt bitmap. Reversible.
     artworkOnFocusOnly: Boolean = false,
 ) {
-    // The catalog is process-constant, so reading it here (instead of taking
-    // it as a parameter) keeps this subtree out of the focus-change
-    // recomposition chain: the unstable List<Game> type no longer flows in.
     val games = PlayBayCatalog.games
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(172.dp),
+            .height(140.dp),
     ) {
         LazyRow(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(x = (-8).dp),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
+                .offset(x = (-4).dp),
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(items = games, key = { it.id }) { game ->
                 GameCard(
                     game = game,
-                    modifier = Modifier.size(width = 208.dp, height = 156.dp),
+                    modifier = Modifier.size(width = 160.dp, height = 120.dp),
                     onFocused = { onGameFocused(game.id) },
                     onClick = { onPlay(game) },
                     artworkOnFocusOnly = artworkOnFocusOnly,
@@ -91,8 +79,8 @@ private fun GameCard(
         onClick = onClick,
         onFocusChanged = { isFocused -> if (isFocused) onFocused() },
         modifier = modifier,
-        shape = RoundedCornerShape(6.dp),
-        focusedScale = 1.045f,
+        shape = RoundedCornerShape(8.dp),
+        focusedScale = 1.04f,
     ) { focused ->
         Box(
             modifier = Modifier
@@ -102,30 +90,15 @@ private fun GameCard(
             if (!artworkOnFocusOnly || focused) {
                 GameArt(style = game.artStyle, modifier = Modifier.fillMaxSize())
             }
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0f to Color.Transparent,
-                            0.5f to PlayBayColors.Ink.copy(alpha = 0.92f),
-                        ),
-                    ),
-            )
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
             ) {
-                Eyebrow(
-                    text = game.genre,
-                    color = if (focused) PlayBayColors.Red else PlayBayColors.Muted,
-                )
-                Spacer(Modifier.height(3.dp))
                 Text(
                     text = game.title,
                     color = PlayBayColors.White,
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -143,14 +116,14 @@ fun RecentRow(
     val recentlyPlayed = PlayBayCatalog.recentlyPlayed
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         recentlyPlayed.forEach { recent ->
             RecentTile(
                 recent = recent,
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
+                    .height(48.dp),
                 onClick = { onPlay(recent.game) },
                 showArtwork = showArtwork,
             )
@@ -168,58 +141,54 @@ private fun RecentTile(
     FocusableCard(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(5.dp),
-        focusedScale = 1.012f,
+        shape = RoundedCornerShape(6.dp),
+        focusedScale = 1.02f,
         borderColor = PlayBayColors.White.copy(alpha = 0.06f),
     ) { focused ->
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    if (focused) {
-                        PlayBayColors.White.copy(alpha = 0.06f)
-                    } else {
-                        PlayBayColors.White.copy(alpha = 0.025f)
-                    },
+                    if (focused) PlayBayColors.White.copy(alpha = 0.06f)
+                    else PlayBayColors.White.copy(alpha = 0.025f),
                 )
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .width(58.dp)
-                    .height(36.dp)
+                    .width(52.dp)
+                    .height(32.dp)
                     .clip(RoundedCornerShape(3.dp)),
             ) {
                 if (showArtwork) {
                     GameArt(style = recent.game.artStyle, modifier = Modifier.fillMaxSize())
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = recent.game.title,
                     color = PlayBayColors.White,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(1.dp))
                 Text(
                     text = recent.playedLabel,
                     color = PlayBayColors.Muted,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
             PlayGlyph(
                 tint = if (focused) PlayBayColors.Red else PlayBayColors.Dim,
-                size = 9.dp,
+                size = 8.dp,
             )
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(2.dp))
         }
     }
 }
