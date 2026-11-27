@@ -28,16 +28,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.playbay.tv.data.Game
 import com.playbay.tv.data.PlayBayCatalog
 import com.playbay.tv.ui.components.Eyebrow
 import com.playbay.tv.ui.components.GearGlyph
+import com.playbay.tv.ui.components.TvButton
 import com.playbay.tv.ui.components.PlayBayBackdrop
-import com.playbay.tv.ui.components.PlayerAvatar
 import com.playbay.tv.ui.theme.PlayBayColors
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -49,7 +51,6 @@ fun HomeScreen(
     onPlay: (Game) -> Unit,
     onOpenSettings: () -> Unit,
     artworkOnFocusOnly: Boolean = false,
-    recentArtwork: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val playFocus = remember { FocusRequester() }
@@ -78,7 +79,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp),
+                    .height(36.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -98,13 +99,13 @@ fun HomeScreen(
                 Text(
                     text = "Player One",
                     color = PlayBayColors.White,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.width(16.dp))
                 Box(
                     Modifier
-                        .size(36.dp)
+                        .size(32.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(PlayBayColors.White.copy(alpha = 0.06f))
                         .clickable(onClick = onOpenSettings),
@@ -112,26 +113,57 @@ fun HomeScreen(
                 ) {
                     GearGlyph(
                         tint = PlayBayColors.White.copy(alpha = 0.7f),
-                        size = 18.dp,
+                        size = 16.dp,
                     )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Featured
-            FeaturedSection(
-                game = state.featured,
-                onPlay = { onPlay(state.focused) },
-                playFocus = playFocus,
-                onPlayFocusChanged = { playFocused = it },
-            )
+            // Info panel (no artwork — driven by focused game)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Choose your game",
+                    color = PlayBayColors.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = state.focused.tagline,
+                    color = PlayBayColors.Muted,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Eyebrow(text = state.focused.genre, color = PlayBayColors.White.copy(alpha = 0.6f))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = state.focused.players,
+                        color = PlayBayColors.Muted,
+                        fontSize = 11.sp,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.onFocusChanged { playFocused = it.isFocused }) {
+                        TvButton(
+                            text = "Play",
+                            onClick = { onPlay(state.focused) },
+                            focusRequester = playFocus,
+                            showPlayGlyph = true,
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(16.dp))
 
-            // Library
+            // Single game carousel
             Text(
-                text = "Library",
+                text = "Games",
                 color = PlayBayColors.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -143,36 +175,21 @@ fun HomeScreen(
                 artworkOnFocusOnly = artworkOnFocusOnly,
             )
 
-            Spacer(Modifier.height(12.dp))
-
-            // Recent
-            Text(
-                text = "Recently Played",
-                color = PlayBayColors.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(8.dp))
-            RecentRow(
-                onPlay = onPlay,
-                showArtwork = recentArtwork,
-            )
-        }
-
-        // Message toast
-        if (state.message != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-                    .background(PlayBayColors.InkRaised, RoundedCornerShape(20.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = state.message,
-                    color = PlayBayColors.White.copy(alpha = 0.9f),
-                    fontSize = 12.sp,
-                )
+            // Message toast
+            if (state.message != null) {
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(PlayBayColors.InkRaised, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = state.message,
+                        color = PlayBayColors.White.copy(alpha = 0.9f),
+                        fontSize = 12.sp,
+                    )
+                }
             }
         }
     }
