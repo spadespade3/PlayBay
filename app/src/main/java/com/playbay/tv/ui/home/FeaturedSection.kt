@@ -161,23 +161,16 @@ private fun FeaturedArt(game: Game) {
                 .background(PlayBayColors.InkRaised),
         ) {
             GameArt(style = game.artStyle, modifier = Modifier.fillMaxSize())
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            0f to PlayBayColors.Ink.copy(alpha = 0.28f),
-                            0.32f to Color.Transparent,
-                        ),
-                    ),
-            )
+            // Single bottom scrim: the horizontal ink-fade was a full-screen
+            // gradient fill on a weak GPU. Merged into one cheaper vertical
+            // gradient so text stays readable without doubling fill rate.
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             0f to Color.Transparent,
-                            0.62f to Color.Transparent,
+                            0.55f to Color.Transparent,
                             1f to PlayBayColors.Ink.copy(alpha = 0.55f),
                         ),
                     ),

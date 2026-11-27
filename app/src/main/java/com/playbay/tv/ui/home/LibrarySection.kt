@@ -101,8 +101,7 @@ private fun GameCard(
                     .background(
                         Brush.verticalGradient(
                             0f to Color.Transparent,
-                            0.38f to Color.Transparent,
-                            1f to PlayBayColors.Ink.copy(alpha = 0.92f),
+                            0.5f to PlayBayColors.Ink.copy(alpha = 0.92f),
                         ),
                     ),
             )
