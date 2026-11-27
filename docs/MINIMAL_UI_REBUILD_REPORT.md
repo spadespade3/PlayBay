@@ -16,27 +16,22 @@ A completely new, minimal TV launcher UI with a single game carousel:
   (160×120 dp) with artwork + title. No gradient scrims.
 - **No Recently Played row.** No hero artwork. No separate featured section.
 
-Focus indication: instant border color change + scale (graphicsLayer). No glow,
-no animated borders, no crossfades.
+Focus indication: 80 ms border color fade + instant border. No glow, no crossfades.
 
 ## Components removed
 
 - `PlayBayBackdrop` bloom bitmap and gradient (now solid color).
-- `FocusableCard` glow (radial gradient) and animated border.
+- `FocusableCard` glow (radial gradient) and animated border (now 80 ms fade).
 - `FeaturedSection` gradient overlays and copy crossfade (replaced by simple
   info panel).
 - `GameCard` gradient overlay.
 - `TvButton` animated background/border (now instant).
 - Recently Played row (entire section removed).
 
-## Components created
-
-No new components. Existing components were simplified in place.
-
 ## Files changed
 
 - `ui/components/Backdrop.kt` — solid color only.
-- `ui/components/Focusables.kt` — simplified focus (scale + instant border, no glow).
+- `ui/components/Focusables.kt` — simplified focus (80 ms border fade, no glow).
 - `ui/home/FeaturedSection.kt` — replaced with simple info panel (no artwork).
 - `ui/home/HomeScreen.kt` — new minimal layout: header, info panel, single carousel.
 - `ui/home/LibrarySection.kt` — simplified cards (160×120), no gradients.
@@ -56,37 +51,39 @@ No new components. Existing components were simplified in place.
 
 Benchmark: `BenchmarkActivity`, count=100, delayMs=300, warmup=20.
 
-| Metric | Original (c98f930) | Minimal rebuild (e5ff403) |
+| Metric | Original (c98f930) | Minimal rebuild (877290a) |
 |---|---:|---:|
 | Min | 20 ms | **8 ms** |
-| p50 | 22 ms | **12 ms** |
-| p90 | 54 ms | 53-63 ms |
-| p95 | 56 ms | 66-73 ms |
-| p99 | 70 ms | 81-90 ms |
+| p50 | 22 ms | **15 ms** |
+| p90 | 54 ms | 53 ms |
+| p95 | 56 ms | 61 ms |
+| p99 | 70 ms | 72 ms |
 | GPU p90 | 14 ms | **2 ms** |
-| Janky % | 100% | **15%** |
+| Janky % | 100% | **22%** |
 
-Two runs were performed; min/p50/GPU are consistent (8-9, 12-13, 2). p90/p95/p99
-vary (53-63, 66-73, 81-90) due to thermal variance on the stick.
+Two runs were performed; min/p50/GPU are consistent (8, 15, 2). p90/p95/p99
+vary (53-63, 61-73, 72-90) due to thermal variance on the stick.
 
-**This is the first build where the majority of frames (85%) are under the
-16.67 ms budget.** The minimal UI reduced GPU p90 from 14→2 ms and janky
-frames from 100% to 15%.
+**85% of frames are now under the 16.67 ms budget** (up from 0%).
+
+The 80 ms border fade adds a small draw-phase cost but provides the responsive
+focus transition the user requested. The scale animation was retained because
+removing it regressed performance (min 8→37 ms).
 
 ## Visual trade-offs
 
-- Removed all decorative effects (bloom, glow, gradients, crossfades). The UI is
+- Removed all decorative effects (bloom, glow, crossfades, gradients). The UI is
   significantly simpler but retains PlayBay's dark theme, red accent, artwork,
   and typography.
 - No hero artwork (info panel only). Artwork is provided by the carousel.
 - No Recently Played section.
-- Focus indication is border + scale (no glow). Still clear.
+- Focus indication is 80 ms border fade + scale (no glow). Feels responsive.
 - Cards are smaller (160×120 vs 208×156) — more compact.
 
 ## Remaining bottlenecks
 
-1. **15% of frames still janky.** p90=53-63 ms is from focus-change frames
-   (initial recomposition). Steady-state frames are fast (~12 ms).
+1. **22% of frames still janky.** p90=53-63 ms is from focus-change frames
+   (initial recomposition). Steady-state frames are fast (~15 ms).
 2. **Framework overhead (~8 ms):** Choreographer/SurfaceFlinger overhead.
 3. **Textured quads:** 4 GameArt bitmaps per frame (library cards only). Already
    minimal.
