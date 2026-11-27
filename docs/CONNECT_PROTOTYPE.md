@@ -1,5 +1,11 @@
 # PlayBay Connect prototype
 
+> **Superseded for the controller work.** The phone app now speaks the directional INPUT
+> protocol and targets the launcher in `:app`. See [`PHONE_CONTROLLER.md`](PHONE_CONTROLLER.md).
+> The `:connect-tv` module and the `HOW_ARE_YOU`/`ACK` exchange below are kept as the
+> record of the connectivity spike; the current phone app no longer sends `HOW_ARE_YOU`,
+> so the tests in this file only exercise `:connect-tv` against an older mobile build.
+
 This prototype adds two independent Android applications without changing the existing PlayBay launcher:
 
 - `:connect-tv`: Android TV host. Displays its local IPv4 address and a six-digit pairing code, then hosts a WebSocket endpoint on TCP port `8765`.
