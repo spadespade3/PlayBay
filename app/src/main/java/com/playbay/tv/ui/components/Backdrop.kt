@@ -30,28 +30,14 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun PlayBayBackdrop(modifier: Modifier = Modifier) {
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
+    // Experiment: solid background only, no bloom/vignette bitmap.
     Box(
         modifier = modifier.background(
             Brush.verticalGradient(
                 colors = listOf(Color(0xFF09090C), PlayBayColors.Ink),
             ),
         ),
-    ) {
-        Spacer(
-            Modifier
-                .fillMaxSize()
-                .drawWithCache {
-                    val width = size.width.roundToInt().coerceAtLeast(1)
-                    val height = size.height.roundToInt().coerceAtLeast(1)
-                    val plate = BackdropRaster.obtain(width, height, density, layoutDirection)
-                    onDrawBehind {
-                        if (plate != null) drawImage(plate) else drawBackdrop()
-                    }
-                },
-        )
-    }
+    )
 }
 
 private object BackdropRaster {
