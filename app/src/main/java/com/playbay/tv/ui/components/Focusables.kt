@@ -100,11 +100,6 @@ fun TvButton(
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     val shape = RoundedCornerShape(6.dp)
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.04f else 1f,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = 600f),
-        label = "scale",
-    )
     val background = when {
         primary && focused -> PlayBayColors.White
         primary -> PlayBayColors.Red
@@ -120,10 +115,6 @@ fun TvButton(
 
     Row(
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .height(48.dp)
             .clip(shape)
             .background(background)
