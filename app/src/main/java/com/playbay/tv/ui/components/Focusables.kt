@@ -1,7 +1,9 @@
 package com.playbay.tv.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,7 +23,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -55,7 +62,12 @@ fun FocusableCard(
         animationSpec = spring(dampingRatio = 0.8f, stiffness = 600f),
         label = "scale",
     )
-    val border = if (focused) focusedBorderColor else borderColor
+    // Fast border fade (80 ms) read in draw phase only.
+    val borderState = animateColorAsState(
+        targetValue = if (focused) focusedBorderColor else borderColor,
+        animationSpec = tween(durationMillis = 80),
+        label = "border",
+    )
 
     Box(
         modifier = modifier
@@ -64,7 +76,18 @@ fun FocusableCard(
                 scaleY = scale
             }
             .clip(shape)
-            .border(width = 2.dp, color = border, shape = shape)
+            .drawBehind {
+                val borderWidth = 2.dp.toPx()
+                val inset = borderWidth / 2f
+                val corner = 8.dp.toPx()
+                drawRoundRect(
+                    color = borderState.value,
+                    topLeft = Offset(inset, inset),
+                    size = Size(size.width - borderWidth, size.height - borderWidth),
+                    cornerRadius = CornerRadius(corner - inset, corner - inset),
+                    style = Stroke(width = borderWidth),
+                )
+            }
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged { state -> onFocusChanged?.invoke(state.isFocused) }
             .onKeyEvent { event ->
@@ -107,18 +130,33 @@ fun TvButton(
         else -> Color.Transparent
     }
     val contentColor = if (primary && focused) PlayBayColors.Ink else PlayBayColors.White
-    val border = when {
-        focused -> PlayBayColors.White
-        primary -> Color.Transparent
-        else -> PlayBayColors.White.copy(alpha = 0.22f)
-    }
+    val borderState = animateColorAsState(
+        targetValue = when {
+            focused -> PlayBayColors.White
+            primary -> Color.Transparent
+            else -> PlayBayColors.White.copy(alpha = 0.22f)
+        },
+        animationSpec = tween(durationMillis = 80),
+        label = "border",
+    )
 
     Row(
         modifier = modifier
             .height(48.dp)
             .clip(shape)
             .background(background)
-            .border(width = 2.dp, color = border, shape = shape)
+            .drawBehind {
+                val borderWidth = 2.dp.toPx()
+                val inset = borderWidth / 2f
+                val corner = 6.dp.toPx()
+                drawRoundRect(
+                    color = borderState.value,
+                    topLeft = Offset(inset, inset),
+                    size = Size(size.width - borderWidth, size.height - borderWidth),
+                    cornerRadius = CornerRadius(corner - inset, corner - inset),
+                    style = Stroke(width = borderWidth),
+                )
+            }
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .clickable(
                 interactionSource = interactionSource,
