@@ -48,6 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import com.playbay.tv.data.Game
+import com.playbay.tv.data.PlayBayCatalog
 import com.playbay.tv.ui.components.Eyebrow
 import com.playbay.tv.ui.components.FocusableCard
 import com.playbay.tv.ui.components.GearGlyph
@@ -103,11 +104,10 @@ fun HomeScreen(
             Spacer(Modifier.height(20.dp))
             SectionHeader(
                 title = "Library",
-                trailing = state.games.size.toString().padStart(2, '0') + " titles",
+                trailing = PlayBayCatalog.games.size.toString().padStart(2, '0') + " titles",
             )
             Spacer(Modifier.height(12.dp))
             LibraryRow(
-                games = state.games,
                 onGameFocused = onGameFocused,
                 onPlay = onPlay,
             )
@@ -115,7 +115,7 @@ fun HomeScreen(
             Spacer(Modifier.height(18.dp))
             SectionHeader(title = "Recently played", trailing = "Local history")
             Spacer(Modifier.height(10.dp))
-            RecentRow(recentlyPlayed = state.recentlyPlayed, onPlay = onPlay)
+            RecentRow(onPlay = onPlay)
         }
 
         Box(

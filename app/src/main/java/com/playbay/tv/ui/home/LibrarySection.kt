@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.playbay.tv.data.Game
+import com.playbay.tv.data.PlayBayCatalog
 import com.playbay.tv.data.RecentGame
 import com.playbay.tv.ui.components.Eyebrow
 import com.playbay.tv.ui.components.FocusableCard
@@ -43,10 +44,13 @@ import com.playbay.tv.ui.theme.PlayBayColors
  */
 @Composable
 fun LibraryRow(
-    games: List<Game>,
     onGameFocused: (String) -> Unit,
     onPlay: (Game) -> Unit,
 ) {
+    // The catalog is process-constant, so reading it here (instead of taking
+    // it as a parameter) keeps this subtree out of the focus-change
+    // recomposition chain: the unstable List<Game> type no longer flows in.
+    val games = PlayBayCatalog.games
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,9 +131,9 @@ private fun GameCard(
 
 @Composable
 fun RecentRow(
-    recentlyPlayed: List<RecentGame>,
     onPlay: (Game) -> Unit,
 ) {
+    val recentlyPlayed = PlayBayCatalog.recentlyPlayed
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
