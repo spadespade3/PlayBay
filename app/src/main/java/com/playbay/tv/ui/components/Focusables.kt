@@ -62,10 +62,11 @@ fun FocusableCard(
         animationSpec = spring(dampingRatio = 0.8f, stiffness = 600f),
         label = "scale",
     )
-    // Fast border fade (80 ms) read in draw phase only.
+    // Fast border fade (40 ms) — quick enough to feel instant, smooth enough
+    // to not be jarring. Read in draw phase only.
     val borderState = animateColorAsState(
         targetValue = if (focused) focusedBorderColor else borderColor,
-        animationSpec = tween(durationMillis = 80),
+        animationSpec = tween(durationMillis = 40),
         label = "border",
     )
 
@@ -136,7 +137,7 @@ fun TvButton(
             primary -> Color.Transparent
             else -> PlayBayColors.White.copy(alpha = 0.22f)
         },
-        animationSpec = tween(durationMillis = 80),
+        animationSpec = tween(durationMillis = 40),
         label = "border",
     )
 

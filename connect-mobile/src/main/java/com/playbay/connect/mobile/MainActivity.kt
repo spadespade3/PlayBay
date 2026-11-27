@@ -59,8 +59,10 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
@@ -112,16 +114,20 @@ private fun ControllerScreen() {
         sequence += 1
         val frame = """{"v":$PROTOCOL_VERSION,"type":"INPUT","action":"$direction",""" +
             """"state":"$state","sequence":$sequence}"""
-        scope.launch {
+        // Send on IO so the main thread (and pointer input handling) is never
+        // blocked by the WebSocket write. Keeps tap-to-send latency minimal.
+        scope.launch(Dispatchers.IO) {
             try {
                 active.send(Frame.Text(frame))
             } catch (_: Exception) {
                 if (session === active) {
-                    session = null
-                    activeDirection = null
-                    holdGuard.set(null)
-                    status = "Connection lost while sending. Reconnect to continue."
-                    statusColor = Bad
+                    withContext(Dispatchers.Main.immediate) {
+                        session = null
+                        activeDirection = null
+                        holdGuard.set(null)
+                        status = "Connection lost while sending. Reconnect to continue."
+                        statusColor = Bad
+                    }
                 }
             }
         }
