@@ -62,6 +62,8 @@ fun HomeScreen(
     onGameFocused: (String) -> Unit,
     onPlay: (Game) -> Unit,
     onOpenSettings: () -> Unit,
+    artworkOnFocusOnly: Boolean = false,
+    recentArtwork: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val playFocus = remember { FocusRequester() }
@@ -110,12 +112,13 @@ fun HomeScreen(
             LibraryRow(
                 onGameFocused = onGameFocused,
                 onPlay = onPlay,
+                artworkOnFocusOnly = artworkOnFocusOnly,
             )
 
             Spacer(Modifier.height(18.dp))
             SectionHeader(title = "Recently played", trailing = "Local history")
             Spacer(Modifier.height(10.dp))
-            RecentRow(onPlay = onPlay)
+            RecentRow(onPlay = onPlay, showArtwork = recentArtwork)
         }
 
         Box(

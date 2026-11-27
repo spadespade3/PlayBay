@@ -99,6 +99,7 @@ class BenchmarkActivity : ComponentActivity() {
             onGameFocused = homeViewModel::onGameFocused,
             onPlay = homeViewModel::onPlayPressed,
             onOpenSettings = {},
+            artworkOnFocusOnly = false,
         )
     }
 

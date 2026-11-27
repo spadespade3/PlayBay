@@ -46,6 +46,9 @@ import com.playbay.tv.ui.theme.PlayBayColors
 fun LibraryRow(
     onGameFocused: (String) -> Unit,
     onPlay: (Game) -> Unit,
+    // Experiment A: when true, unfocused cards show a solid placeholder
+    // instead of their GameArt bitmap. Reversible.
+    artworkOnFocusOnly: Boolean = false,
 ) {
     // The catalog is process-constant, so reading it here (instead of taking
     // it as a parameter) keeps this subtree out of the focus-change
@@ -69,6 +72,7 @@ fun LibraryRow(
                     modifier = Modifier.size(width = 208.dp, height = 156.dp),
                     onFocused = { onGameFocused(game.id) },
                     onClick = { onPlay(game) },
+                    artworkOnFocusOnly = artworkOnFocusOnly,
                 )
             }
         }
@@ -81,6 +85,7 @@ private fun GameCard(
     modifier: Modifier = Modifier,
     onFocused: () -> Unit,
     onClick: () -> Unit,
+    artworkOnFocusOnly: Boolean = false,
 ) {
     FocusableCard(
         onClick = onClick,
@@ -94,7 +99,9 @@ private fun GameCard(
                 .fillMaxSize()
                 .background(PlayBayColors.InkSoft),
         ) {
-            GameArt(style = game.artStyle, modifier = Modifier.fillMaxSize())
+            if (!artworkOnFocusOnly || focused) {
+                GameArt(style = game.artStyle, modifier = Modifier.fillMaxSize())
+            }
             Box(
                 Modifier
                     .fillMaxSize()
@@ -131,6 +138,7 @@ private fun GameCard(
 @Composable
 fun RecentRow(
     onPlay: (Game) -> Unit,
+    showArtwork: Boolean = true,
 ) {
     val recentlyPlayed = PlayBayCatalog.recentlyPlayed
     Row(
@@ -144,6 +152,7 @@ fun RecentRow(
                     .weight(1f)
                     .height(52.dp),
                 onClick = { onPlay(recent.game) },
+                showArtwork = showArtwork,
             )
         }
     }
@@ -154,6 +163,7 @@ private fun RecentTile(
     recent: RecentGame,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    showArtwork: Boolean = true,
 ) {
     FocusableCard(
         onClick = onClick,
@@ -181,7 +191,9 @@ private fun RecentTile(
                     .height(36.dp)
                     .clip(RoundedCornerShape(3.dp)),
             ) {
-                GameArt(style = recent.game.artStyle, modifier = Modifier.fillMaxSize())
+                if (showArtwork) {
+                    GameArt(style = recent.game.artStyle, modifier = Modifier.fillMaxSize())
+                }
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

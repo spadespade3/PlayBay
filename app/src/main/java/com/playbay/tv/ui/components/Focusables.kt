@@ -74,19 +74,9 @@ fun FocusableCard(
         animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
         label = "focusScale",
     )
-    // State objects are held as state (not read via `by` at composition) so the
-    // animation only invalidates the draw phase below instead of recomposing the
-    // whole card — and its content — on every animation frame.
-    val borderState = animateColorAsState(
-        targetValue = if (focused) focusedBorderColor else borderColor,
-        animationSpec = tween(durationMillis = 140),
-        label = "focusBorder",
-    )
-    val glowState = animateFloatAsState(
-        targetValue = if (focused) 1f else 0f,
-        animationSpec = tween(durationMillis = 220),
-        label = "focusGlow",
-    )
+    // Simple focus: instant border (no animation), no glow (saves a radial-gradient
+    // shader fill per focused card). Scale animation retained (cheap graphicsLayer).
+    val border = if (focused) focusedBorderColor else borderColor
 
     Box(
         modifier = modifier
@@ -95,34 +85,17 @@ fun FocusableCard(
                 scaleY = scaleState.value
             }
             .clip(shape)
-            .drawWithCache {
-                val glowRadius = size.maxDimension * 0.62f
-                val glowBrush = Brush.radialGradient(
-                    colors = listOf(glowColor.copy(alpha = 0.10f), Color.Transparent),
-                    center = Offset(size.width / 2f, size.height / 2f),
-                    radius = glowRadius,
-                )
-                val glowCorner = CornerRadius(24.dp.toPx())
+            .drawBehind {
                 val borderWidth = 2.dp.toPx()
                 val inset = borderWidth / 2f
-                onDrawBehind {
-                    val glow = glowState.value
-                    if (glow > 0.01f) {
-                        drawRoundRect(
-                            brush = glowBrush,
-                            cornerRadius = glowCorner,
-                            alpha = glow,
-                        )
-                    }
-                    val border = borderState.value
-                    drawRoundRect(
-                        color = border,
-                        topLeft = Offset(inset, inset),
-                        size = Size(size.width - borderWidth, size.height - borderWidth),
-                        cornerRadius = CornerRadius(glowCorner.x - inset, glowCorner.y - inset),
-                        style = Stroke(width = borderWidth),
-                    )
-                }
+                val corner = 12.dp.toPx()
+                drawRoundRect(
+                    color = border,
+                    topLeft = Offset(inset, inset),
+                    size = Size(size.width - borderWidth, size.height - borderWidth),
+                    cornerRadius = CornerRadius(corner - inset, corner - inset),
+                    style = Stroke(width = borderWidth),
+                )
             }
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged { state -> onFocusChanged?.invoke(state.isFocused) }

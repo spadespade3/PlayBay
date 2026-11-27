@@ -60,16 +60,8 @@ fun FeaturedSection(
                 .weight(1f)
                 .padding(end = 44.dp),
         ) {
-            Crossfade(
-                targetState = game,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(174.dp),
-                animationSpec = tween(260),
-                label = "featuredCopy",
-            ) { featured ->
-                FeaturedCopy(featured)
-            }
+            // Instant text swap — no crossfade, no per-frame text layout churn.
+            FeaturedCopy(game)
             Spacer(Modifier.height(16.dp))
             Box(Modifier.onFocusChanged { onPlayFocusChanged?.invoke(it.isFocused) }) {
                 TvButton(
@@ -161,9 +153,7 @@ private fun FeaturedArt(game: Game) {
                 .background(PlayBayColors.InkRaised),
         ) {
             GameArt(style = game.artStyle, modifier = Modifier.fillMaxSize())
-            // Single bottom scrim: the horizontal ink-fade was a full-screen
-            // gradient fill on a weak GPU. Merged into one cheaper vertical
-            // gradient so text stays readable without doubling fill rate.
+            // Single bottom scrim: keeps text readable over the artwork.
             Box(
                 Modifier
                     .fillMaxSize()
