@@ -36,9 +36,20 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The Play action and game tiles currently show a placeholder message. They do not start a game.
 
+## Phone controller
+
+The TV app hosts a LAN WebSocket pairing gate and accepts directional input from the
+PlayBay Connect phone app (`:connect-mobile`), which is normalized into the same focus
+navigation the remote uses. Physical remotes and gamepads keep working either way.
+
+See [`docs/PHONE_CONTROLLER.md`](docs/PHONE_CONTROLLER.md) for the protocol, pairing flow,
+input architecture, and known limitations.
+
 ## Scope
 
-This repository contains the home-screen slice only. Game execution, player accounts, networking, multiplayer, pairing, and the phone controller app are not implemented.
+This repository contains the home-screen slice only. Game execution, player accounts,
+networking, and multiplayer are not implemented. Pairing and the phone controller exist
+on `feature/phone-controller-launcher-integration`; `main` does not have them yet.
 
 ## Status
 

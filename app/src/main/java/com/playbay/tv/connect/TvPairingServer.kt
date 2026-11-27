@@ -14,12 +14,19 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 import java.net.Inet4Address
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.ServerSocket
 import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -51,6 +58,7 @@ class TvPairingServer(
     val pairingCode: String = (100000 + random.nextInt(900000)).toString()
 
     private var engine: EmbeddedServer<*, *>? = null
+    private var engineScope: CoroutineScope? = null
 
     /** Guards against a second `start()` racing the first one in. */
     private val running = AtomicBoolean(false)
@@ -60,8 +68,34 @@ class TvPairingServer(
 
     fun start() {
         if (!running.compareAndSet(false, true)) return
+
+        // Ktor binds inside its own accept coroutine, so a port clash surfaces
+        // asynchronously and would otherwise take the process down. Probe first,
+        // then keep a handler on the engine scope as the backstop.
+        if (!portIsFree()) {
+            running.set(false)
+            _status.value = "Port $SERVER_PORT is already in use — close the other PlayBay TV app."
+            return
+        }
+
+        val handler = CoroutineExceptionHandler { _, error ->
+            running.set(false)
+            _status.value = "Server error: ${error.message ?: error::class.simpleName ?: "unknown"}"
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + handler)
+        engineScope = scope
+
         try {
-            engine = embeddedServer(CIO, host = "0.0.0.0", port = SERVER_PORT) {
+            // `embeddedServer` with a scope is an extension on CoroutineScope in
+            // Ktor 3.3.x. The engine's accept job then runs as a child of [scope],
+            // so [handler] catches a bind failure instead of the process dying.
+            engine = scope.embeddedServer(
+                factory = CIO,
+                port = SERVER_PORT,
+                host = "0.0.0.0",
+                watchPaths = emptyList(),
+                parentCoroutineContext = Dispatchers.IO + handler,
+            ) {
                 install(WebSockets) {
                     // Application-level ping is the liveness check. It costs one
                     // tiny control frame every 15s instead of an ACK per input.
@@ -121,6 +155,8 @@ class TvPairingServer(
         } catch (error: Exception) {
             running.set(false)
             engine = null
+            engineScope?.cancel()
+            engineScope = null
             val message = error.message ?: error::class.simpleName ?: "unknown error"
             _status.value = "Server failed to start: $message"
             onError(message)
@@ -131,12 +167,24 @@ class TvPairingServer(
         if (!running.compareAndSet(true, false)) return
         engine?.stop(gracePeriodMillis = 250, timeoutMillis = 1_000)
         engine = null
+        engineScope?.cancel()
+        engineScope = null
     }
 
     /** Stop, then bind again. Used when the first bind lost a port race. */
     fun restart() {
         stop()
         start()
+    }
+
+    private fun portIsFree(): Boolean = try {
+        ServerSocket().use { probe ->
+            probe.reuseAddress = true
+            probe.bind(InetSocketAddress("0.0.0.0", SERVER_PORT))
+        }
+        true
+    } catch (_: Exception) {
+        false
     }
 }
 
