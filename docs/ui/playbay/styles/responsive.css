@@ -6,7 +6,7 @@
   .home-side { order: 2; }
   .lobby { grid-template-columns: 1fr; }
   .profile { grid-template-columns: 1fr; }
-  .main { padding: var(--space-4); }
+  .main { padding: var(--space-4) var(--space-4) calc(var(--space-8) + 84px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (max-width: 640px) {
