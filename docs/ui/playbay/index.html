@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="styles/responsive.css">
 </head>
 <body>
-<a class="skip-link" href="#main-content" style="position:absolute;left:-9999px;top:0;padding:8px 12px;background:var(--accent);color:#0d0c0a;border-radius:0 0 6px 0;z-index:100">Skip to content</a>
+<a class="skip-link" href="#main-content">Skip to content</a>
 
 <div class="app">
   <header class="topbar" role="banner">
@@ -97,11 +97,11 @@
               <a class="section-link" href="#">See all</a>
             </div>
             <div class="row" role="list">
-              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">NK</div><div class="game-name">Neon Kart</div><div class="game-sub">Racing · 4P</div></div>
-              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">BF</div><div class="game-name">Block Fortress</div><div class="game-sub">Strategy · 6P</div></div>
-              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">PF</div><div class="game-name">Puzzle Forge</div><div class="game-sub">Puzzle · 2P</div></div>
-              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">TD</div><div class="game-name">Tower Defense X</div><div class="game-sub">Strategy · 4P</div></div>
-              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">PB</div><div class="game-name">Pixel Brawl</div><div class="game-sub">Fighting · 4P</div></div>
+              <div class="game" role="listitem"><div class="game-thumb" aria-hidden="true">NK</div><div class="game-name">Neon Kart</div><div class="game-sub">Racing · 4P</div></div>
+              <div class="game" role="listitem"><div class="game-thumb" aria-hidden="true">BF</div><div class="game-name">Block Fortress</div><div class="game-sub">Strategy · 6P</div></div>
+              <div class="game" role="listitem"><div class="game-thumb" aria-hidden="true">PF</div><div class="game-name">Puzzle Forge</div><div class="game-sub">Puzzle · 2P</div></div>
+              <div class="game" role="listitem"><div class="game-thumb" aria-hidden="true">TD</div><div class="game-name">Tower Defense X</div><div class="game-sub">Strategy · 4P</div></div>
+              <div class="game" role="listitem"><div class="game-thumb" aria-hidden="true">PB</div><div class="game-name">Pixel Brawl</div><div class="game-sub">Fighting · 4P</div></div>
             </div>
           </div>
 
@@ -111,10 +111,10 @@
               <a class="section-link" href="#">All genres</a>
             </div>
             <div class="genre-grid">
-              <div class="genre" tabindex="0"><div class="genre-name">Racing</div><div class="genre-count">6 games</div></div>
-              <div class="genre" tabindex="0"><div class="genre-name">Strategy</div><div class="genre-count">8 games</div></div>
-              <div class="genre" tabindex="0"><div class="genre-name">Party</div><div class="genre-count">5 games</div></div>
-              <div class="genre" tabindex="0"><div class="genre-name">Puzzle</div><div class="genre-count">4 games</div></div>
+              <div class="genre"><div class="genre-name">Racing</div><div class="genre-count">6 games</div></div>
+              <div class="genre"><div class="genre-name">Strategy</div><div class="genre-count">8 games</div></div>
+              <div class="genre"><div class="genre-name">Party</div><div class="genre-count">5 games</div></div>
+              <div class="genre"><div class="genre-name">Puzzle</div><div class="genre-count">4 games</div></div>
             </div>
           </div>
         </div>
@@ -145,25 +145,26 @@
         <div style="font-size:12px;color:var(--muted)">24 games · 6 installed</div>
       </div>
       <div class="filters" role="group" aria-label="Filter games">
-        <button class="filter active" aria-pressed="true">All</button>
-        <button class="filter" aria-pressed="false">Installed</button>
-        <button class="filter" aria-pressed="false">Cloud</button>
-        <button class="filter" aria-pressed="false">Multiplayer</button>
+        <button class="filter active" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter" data-filter="installed" aria-pressed="false">Installed</button>
+        <button class="filter" data-filter="cloud" aria-pressed="false">Cloud</button>
+        <button class="filter" data-filter="multiplayer" aria-pressed="false">Multiplayer</button>
       </div>
       <div class="library-grid">
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">NK</div><div class="lib-name">Neon Kart</div><div class="lib-meta">Racing · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">BF</div><div class="lib-name">Block Fortress</div><div class="lib-meta">Strategy · 6 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">PF</div><div class="lib-name">Puzzle Forge</div><div class="lib-meta">Puzzle · 2 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">TD</div><div class="lib-name">Tower Defense X</div><div class="lib-meta">Strategy · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">PB</div><div class="lib-name">Pixel Brawl</div><div class="lib-meta">Fighting · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">CR</div><div class="lib-name">Cosmic Runners</div><div class="lib-meta">Action · 8 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">DD</div><div class="lib-name">Dungeon Dice</div><div class="lib-meta">RPG · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">SR</div><div class="lib-name">Speed Runners</div><div class="lib-meta">Racing · 6 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">QB</div><div class="lib-name">Quiz Battle</div><div class="lib-meta">Trivia · 8 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">WR</div><div class="lib-name">Word Rush</div><div class="lib-meta">Word · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">CC</div><div class="lib-name">Card Clash</div><div class="lib-meta">Cards · 4 players</div></div>
-        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">AT</div><div class="lib-name">Aim Trainer</div><div class="lib-meta">Action · 2 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">NK</div><div class="lib-name">Neon Kart</div><div class="lib-meta">Racing · 4 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">BF</div><div class="lib-name">Block Fortress</div><div class="lib-meta">Strategy · 6 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="false"><div class="lib-thumb" aria-hidden="true">PF</div><div class="lib-name">Puzzle Forge</div><div class="lib-meta">Puzzle · 2 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">TD</div><div class="lib-name">Tower Defense X</div><div class="lib-meta">Strategy · 4 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">PB</div><div class="lib-name">Pixel Brawl</div><div class="lib-meta">Fighting · 4 players</div></div>
+        <div class="lib" data-installed="true" data-cloud="false" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">CR</div><div class="lib-name">Cosmic Runners</div><div class="lib-meta">Action · 8 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">DD</div><div class="lib-name">Dungeon Dice</div><div class="lib-meta">RPG · 4 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">SR</div><div class="lib-name">Speed Runners</div><div class="lib-meta">Racing · 6 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">QB</div><div class="lib-name">Quiz Battle</div><div class="lib-meta">Trivia · 8 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">WR</div><div class="lib-name">Word Rush</div><div class="lib-meta">Word · 4 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="true"><div class="lib-thumb" aria-hidden="true">CC</div><div class="lib-name">Card Clash</div><div class="lib-meta">Cards · 4 players</div></div>
+        <div class="lib" data-installed="false" data-cloud="true" data-multiplayer="false"><div class="lib-thumb" aria-hidden="true">AT</div><div class="lib-name">Aim Trainer</div><div class="lib-meta">Action · 2 players</div></div>
       </div>
+      <p class="empty-state" data-library-empty hidden>No games match your search and filters.</p>
     </section>
 
     <!-- LOBBY -->
