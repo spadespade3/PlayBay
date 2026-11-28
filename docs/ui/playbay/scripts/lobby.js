@@ -3,10 +3,13 @@
   'use strict';
 
   // Single source of truth for this lobby session.
-  const session = {
+  const session = Object.freeze({
     connectCode: '137 30',
     joinUrl: 'https://playbay.app/join/13730',
-  };
+    isDemo: true,
+  });
+  // Shared with navigation.js so the QR and Share action use exactly one URL.
+  window.PlayBaySession = session;
 
   const codeEl = document.querySelector('.code-value');
   if (codeEl) codeEl.textContent = session.connectCode;
@@ -24,9 +27,16 @@
     return;
   }
 
-  const qr = st(0, 'H');
-  qr.addData(session.joinUrl, 'Byte');
-  qr.make();
+  let qr;
+  try {
+    qr = st(0, 'H');
+    qr.addData(session.joinUrl, 'Byte');
+    qr.make();
+  } catch (_) {
+    container.textContent = 'QR unavailable';
+    container.setAttribute('aria-label', 'QR code unavailable in this demo');
+    return;
+  }
 
   const count = qr.getModuleCount();
   const cell = 4;
@@ -39,7 +49,7 @@
   svg.setAttribute('height', '100%');
   svg.setAttribute('shape-rendering', 'crispEdges');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'QR code for ' + session.joinUrl);
+  svg.setAttribute('aria-label', 'Demo QR code for ' + session.joinUrl);
 
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   bg.setAttribute('width', size);
