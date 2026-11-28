@@ -98,3 +98,8 @@
 .genre:hover { border-color: var(--line-2); }
 .genre-name { font-weight: 600; font-size: 13px; }
 .genre-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Functional states and accessible focus */
+.empty-state { margin: var(--space-5) 0; padding: var(--space-4); border: 1px dashed var(--line-2); border-radius: var(--radius); color: var(--muted); font-size: 13px; text-align: center; }
+.game[hidden], .lib[hidden], .screen[hidden], .empty-state[hidden] { display: none !important; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
