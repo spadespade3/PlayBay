@@ -28,6 +28,9 @@
 .row::-webkit-scrollbar { height: 6px; }
 .row::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
 .game { width: 168px; flex-shrink: 0; cursor: pointer; }
+.game.selected .game-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lib.selected .lib-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.genre.selected { border-color: var(--accent); background: var(--surface-2); }
 .game-thumb { height: 96px; border-radius: var(--radius); background: var(--surface-2); margin-bottom: var(--space-2); display: grid; place-items: center; color: var(--text-2); font-family: var(--font-display); font-weight: 800; font-size: 28px; opacity: .7; }
 .game-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .game-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }

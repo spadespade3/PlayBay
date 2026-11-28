@@ -61,11 +61,19 @@
     </div>
   </aside>
 
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <button data-screen="home" class="active"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5L1 7h2v7h4v-4h2v4h4V7h2L8 1.5z"/></svg>Home</button>
+    <button data-screen="library"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z"/></svg>Library</button>
+    <button data-screen="lobby"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>Lobby</button>
+    <button data-screen="profile"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm0 1c-3.3 0-6 1.7-6 3.8V14h12v-1.2c0-2.1-2.7-3.8-6-3.8z"/></svg>Profile</button>
+    <button data-screen="settings"><svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.5 1h3l.5 2a5 5 0 011.6.9l1.9-.8 2.1 2.1-.8 1.9a5 5 0 01.9 1.6l2 .5v3l-2 .5a5 5 0 01-.9 1.6l.8 1.9-2.1 2.1-1.9-.8a5 5 0 01-1.6.9l-.5 2h-3l-.5-2a5 5 0 01-1.6-.9l-1.9.8-2.1-2.1.8-1.9a5 5 0 01-.9-1.6l-2-.5v-3l2-.5a5 5 0 01.9-1.6l-.8-1.9 2.1-2.1 1.9.8a5 5 0 011.6-.9l.5-2zM8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg>Settings</button>
+  </nav>
+
   <main class="main" id="main-content" tabindex="-1">
 
     <!-- HOME -->
     <section class="screen active" id="screen-home" aria-labelledby="home-title">
-      <h1 id="home-title" style="position:absolute;left:-9999px">Home</h1>
+      <h1 id="home-title" class="sr-only">Home</h1>
       <div class="now">
         <div class="now-thumb" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -76,8 +84,8 @@
           <div class="now-meta">Racing · 2h 14m played · last session 2 days ago</div>
         </div>
         <div class="now-actions">
-          <button class="btn btn-primary">Resume</button>
-          <button class="btn btn-ghost">Details</button>
+          <button class="btn btn-primary" data-requires-backend>Resume</button>
+          <button class="btn btn-ghost" data-requires-backend>Details</button>
         </div>
       </div>
 
@@ -131,7 +139,7 @@
 
     <!-- LIBRARY -->
     <section class="screen" id="screen-library" aria-labelledby="lib-title">
-      <h1 id="lib-title" style="position:absolute;left:-9999px">Library</h1>
+      <h1 id="lib-title" class="sr-only">Library</h1>
       <div class="section-head">
         <div class="section-title">Library</div>
         <div style="font-size:12px;color:var(--muted)">24 games · 6 installed</div>
@@ -160,7 +168,7 @@
 
     <!-- LOBBY -->
     <section class="screen" id="screen-lobby" aria-labelledby="lobby-title">
-      <h1 id="lobby-title" style="position:absolute;left:-9999px">Lobby</h1>
+      <h1 id="lobby-title" class="sr-only">Lobby</h1>
       <div class="section-head">
         <div class="section-title">Lobby · Neon Kart</div>
         <div style="font-size:12px;color:var(--muted)">2 of 4 connected</div>
@@ -172,8 +180,8 @@
           <div class="qr" role="img" aria-label="QR code linking to playbay.app/join/13730"></div>
           <div style="font-size:12px;color:var(--muted)">Open playbay.app on a phone and enter the code, or scan the QR.</div>
           <div class="lobby-actions">
-            <button class="btn btn-primary">Start game</button>
-            <button class="btn btn-ghost">Share link</button>
+            <button class="btn btn-primary" data-requires-backend>Start game</button>
+            <button class="btn btn-ghost" data-action="share">Share link</button>
           </div>
         </div>
         <div class="players">
@@ -194,14 +202,14 @@
             <div class="player-avatar" aria-hidden="true">·</div>
             <div><div class="player-name" style="color:var(--muted)">Slot 4</div><div class="player-status">Waiting</div></div>
           </div>
-          <button class="btn btn-ghost btn-sm" style="align-self:flex-start;margin-top:4px">+ Add player</button>
+          <button class="btn btn-ghost btn-sm" data-requires-backend style="align-self:flex-start;margin-top:4px">+ Add player</button>
         </div>
       </div>
     </section>
 
     <!-- PROFILE -->
     <section class="screen" id="screen-profile" aria-labelledby="profile-title">
-      <h1 id="profile-title" style="position:absolute;left:-9999px">Profile</h1>
+      <h1 id="profile-title" class="sr-only">Profile</h1>
       <div class="profile">
         <div class="profile-card">
           <div class="profile-avatar" aria-hidden="true">D</div>
@@ -241,7 +249,7 @@
 
     <!-- SETTINGS -->
     <section class="screen" id="screen-settings" aria-labelledby="settings-title">
-      <h1 id="settings-title" style="position:absolute;left:-9999px">Settings</h1>
+      <h1 id="settings-title" class="sr-only">Settings</h1>
       <div style="font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:16px">Settings</div>
       <div class="settings" style="max-width:640px">
         <div class="setting">
@@ -271,8 +279,8 @@
           <button class="toggle on" role="switch" aria-checked="true" aria-label="Controller vibration"></button>
         </div>
         <div style="margin-top:20px;display:flex;gap:8px">
-          <button class="btn btn-primary">Save</button>
-          <button class="btn btn-ghost">Reset</button>
+          <button class="btn btn-primary" data-action="save">Save</button>
+          <button class="btn btn-ghost" data-action="reset">Reset</button>
         </div>
       </div>
     </section>
