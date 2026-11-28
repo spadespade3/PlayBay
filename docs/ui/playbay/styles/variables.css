@@ -1,0 +1,32 @@
+/* Design tokens — PlayBay */
+:root {
+  --bg: #0d0c0a;
+  --bg-2: #15130f;
+  --surface: #1c1914;
+  --surface-2: #252119;
+  --surface-3: #302a20;
+  --line: #332e25;
+  --line-2: #443d32;
+  --text: #f2eee6;
+  --text-2: #b8b2a6;
+  --muted: #7a746a;
+  --accent: #ff7a2f;
+  --accent-2: #ffb347;
+  --teal: #2dd4bf;
+  --danger: #ff5a5a;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --bp-sm: 640px;
+  --bp-md: 900px;
+  --bp-lg: 1200px;
+}

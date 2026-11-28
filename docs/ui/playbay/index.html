@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>PlayBay — Gaming Launcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/variables.css">
+<link rel="stylesheet" href="styles/reset.css">
+<link rel="stylesheet" href="styles/layout.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/pages.css">
+<link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content" style="position:absolute;left:-9999px;top:0;padding:8px 12px;background:var(--accent);color:#0d0c0a;border-radius:0 0 6px 0;z-index:100">Skip to content</a>
+
+<div class="app">
+  <header class="topbar" role="banner">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">P</div>PlayBay</div>
+    <div class="search" role="search">
+      <span class="ico" aria-hidden="true">⌕</span>
+      <input type="search" placeholder="Search games, players" aria-label="Search games and players" />
+    </div>
+    <div class="top-actions">
+      <div class="user" aria-label="Signed in as Dan">
+        <div class="user-avatar" aria-hidden="true">D</div>
+        <span>Dan</span>
+      </div>
+    </div>
+  </header>
+
+  <aside class="sidebar" aria-label="Main navigation">
+    <nav>
+      <button class="nav-item active" data-screen="home" aria-current="page">
+        <svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5L1 7h2v7h4v-4h2v4h4V7h2L8 1.5z"/></svg>
+        Home
+      </button>
+      <button class="nav-item" data-screen="library">
+        <svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z"/></svg>
+        Library<span class="count">24</span>
+      </button>
+      <button class="nav-item" data-screen="lobby">
+        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+        Lobby<span class="count">2</span>
+      </button>
+      <button class="nav-item" data-screen="profile">
+        <svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm0 1c-3.3 0-6 1.7-6 3.8V14h12v-1.2c0-2.1-2.7-3.8-6-3.8z"/></svg>
+        Profile
+      </button>
+      <button class="nav-item" data-screen="settings">
+        <svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.5 1h3l.5 2a5 5 0 011.6.9l1.9-.8 2.1 2.1-.8 1.9a5 5 0 01.9 1.6l2 .5v3l-2 .5a5 5 0 01-.9 1.6l.8 1.9-2.1 2.1-1.9-.8a5 5 0 01-1.6.9l-.5 2h-3l-.5-2a5 5 0 01-1.6-.9l-1.9.8-2.1-2.1.8-1.9a5 5 0 01-.9-1.6l-2-.5v-3l2-.5a5 5 0 01.9-1.6l-.8-1.9 2.1-2.1 1.9.8a5 5 0 011.6-.9l.5-2zM8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--teal)" aria-hidden="true"></span>
+      Online
+    </div>
+  </aside>
+
+  <main class="main" id="main-content" tabindex="-1">
+
+    <!-- HOME -->
+    <section class="screen active" id="screen-home" aria-labelledby="home-title">
+      <h1 id="home-title" style="position:absolute;left:-9999px">Home</h1>
+      <div class="now">
+        <div class="now-thumb" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <div class="now-info">
+          <div class="now-label">Resume</div>
+          <div class="now-title">Neon Kart</div>
+          <div class="now-meta">Racing · 2h 14m played · last session 2 days ago</div>
+        </div>
+        <div class="now-actions">
+          <button class="btn btn-primary">Resume</button>
+          <button class="btn btn-ghost">Details</button>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <div class="home-main">
+          <div class="section">
+            <div class="section-head">
+              <div class="section-title">Recently played</div>
+              <a class="section-link" href="#">See all</a>
+            </div>
+            <div class="row" role="list">
+              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">NK</div><div class="game-name">Neon Kart</div><div class="game-sub">Racing · 4P</div></div>
+              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">BF</div><div class="game-name">Block Fortress</div><div class="game-sub">Strategy · 6P</div></div>
+              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">PF</div><div class="game-name">Puzzle Forge</div><div class="game-sub">Puzzle · 2P</div></div>
+              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">TD</div><div class="game-name">Tower Defense X</div><div class="game-sub">Strategy · 4P</div></div>
+              <div class="game" role="listitem" tabindex="0"><div class="game-thumb" aria-hidden="true">PB</div><div class="game-name">Pixel Brawl</div><div class="game-sub">Fighting · 4P</div></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head">
+              <div class="section-title">Browse by genre</div>
+              <a class="section-link" href="#">All genres</a>
+            </div>
+            <div class="genre-grid">
+              <div class="genre" tabindex="0"><div class="genre-name">Racing</div><div class="genre-count">6 games</div></div>
+              <div class="genre" tabindex="0"><div class="genre-name">Strategy</div><div class="genre-count">8 games</div></div>
+              <div class="genre" tabindex="0"><div class="genre-name">Party</div><div class="genre-count">5 games</div></div>
+              <div class="genre" tabindex="0"><div class="genre-name">Puzzle</div><div class="genre-count">4 games</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-side">
+          <div class="panel">
+            <div class="panel-title">Friends online</div>
+            <div class="friend"><div class="friend-avatar" aria-hidden="true">M</div><div><div class="friend-name">Maya</div><div class="friend-status on">In lobby · Neon Kart</div></div></div>
+            <div class="friend"><div class="friend-avatar" aria-hidden="true">L</div><div><div class="friend-name">Leo</div><div class="friend-status on">In lobby · Neon Kart</div></div></div>
+            <div class="friend"><div class="friend-avatar" aria-hidden="true">S</div><div><div class="friend-name">Sam</div><div class="friend-status">Idle</div></div></div>
+            <div class="friend"><div class="friend-avatar" aria-hidden="true">A</div><div><div class="friend-name">Ava</div><div class="friend-status">Idle</div></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Activity</div>
+            <div class="activity">Unlocked "First win"<div class="time">Today</div></div>
+            <div class="activity">Maya invited you to Neon Kart<div class="time">2 hours ago</div></div>
+            <div class="activity">Block Fortress updated to v2.1<div class="time">Yesterday</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="screen" id="screen-library" aria-labelledby="lib-title">
+      <h1 id="lib-title" style="position:absolute;left:-9999px">Library</h1>
+      <div class="section-head">
+        <div class="section-title">Library</div>
+        <div style="font-size:12px;color:var(--muted)">24 games · 6 installed</div>
+      </div>
+      <div class="filters" role="group" aria-label="Filter games">
+        <button class="filter active" aria-pressed="true">All</button>
+        <button class="filter" aria-pressed="false">Installed</button>
+        <button class="filter" aria-pressed="false">Cloud</button>
+        <button class="filter" aria-pressed="false">Multiplayer</button>
+      </div>
+      <div class="library-grid">
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">NK</div><div class="lib-name">Neon Kart</div><div class="lib-meta">Racing · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">BF</div><div class="lib-name">Block Fortress</div><div class="lib-meta">Strategy · 6 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">PF</div><div class="lib-name">Puzzle Forge</div><div class="lib-meta">Puzzle · 2 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">TD</div><div class="lib-name">Tower Defense X</div><div class="lib-meta">Strategy · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">PB</div><div class="lib-name">Pixel Brawl</div><div class="lib-meta">Fighting · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">CR</div><div class="lib-name">Cosmic Runners</div><div class="lib-meta">Action · 8 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">DD</div><div class="lib-name">Dungeon Dice</div><div class="lib-meta">RPG · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">SR</div><div class="lib-name">Speed Runners</div><div class="lib-meta">Racing · 6 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">QB</div><div class="lib-name">Quiz Battle</div><div class="lib-meta">Trivia · 8 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">WR</div><div class="lib-name">Word Rush</div><div class="lib-meta">Word · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">CC</div><div class="lib-name">Card Clash</div><div class="lib-meta">Cards · 4 players</div></div>
+        <div class="lib" tabindex="0"><div class="lib-thumb" aria-hidden="true">AT</div><div class="lib-name">Aim Trainer</div><div class="lib-meta">Action · 2 players</div></div>
+      </div>
+    </section>
+
+    <!-- LOBBY -->
+    <section class="screen" id="screen-lobby" aria-labelledby="lobby-title">
+      <h1 id="lobby-title" style="position:absolute;left:-9999px">Lobby</h1>
+      <div class="section-head">
+        <div class="section-title">Lobby · Neon Kart</div>
+        <div style="font-size:12px;color:var(--muted)">2 of 4 connected</div>
+      </div>
+      <div class="lobby">
+        <div class="code-block">
+          <div class="code-label">Connect code</div>
+          <div class="code-value" aria-label="Connect code 1 3 7 3 0">137 30</div>
+          <div class="qr" role="img" aria-label="QR code linking to playbay.app/join/13730"></div>
+          <div style="font-size:12px;color:var(--muted)">Open playbay.app on a phone and enter the code, or scan the QR.</div>
+          <div class="lobby-actions">
+            <button class="btn btn-primary">Start game</button>
+            <button class="btn btn-ghost">Share link</button>
+          </div>
+        </div>
+        <div class="players">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:14px;margin-bottom:4px">Players</div>
+          <div class="player">
+            <div class="player-avatar" aria-hidden="true">D</div>
+            <div><div class="player-name">Dan (host)</div><div class="player-status on">Ready</div></div>
+          </div>
+          <div class="player">
+            <div class="player-avatar" aria-hidden="true">M</div>
+            <div><div class="player-name">Maya</div><div class="player-status on">Ready</div></div>
+          </div>
+          <div class="player">
+            <div class="player-avatar" aria-hidden="true">·</div>
+            <div><div class="player-name" style="color:var(--muted)">Slot 3</div><div class="player-status">Waiting</div></div>
+          </div>
+          <div class="player">
+            <div class="player-avatar" aria-hidden="true">·</div>
+            <div><div class="player-name" style="color:var(--muted)">Slot 4</div><div class="player-status">Waiting</div></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-start;margin-top:4px">+ Add player</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen" id="screen-profile" aria-labelledby="profile-title">
+      <h1 id="profile-title" style="position:absolute;left:-9999px">Profile</h1>
+      <div class="profile">
+        <div class="profile-card">
+          <div class="profile-avatar" aria-hidden="true">D</div>
+          <div class="profile-name">Dan</div>
+          <div class="profile-handle">Level 14 · 42h played</div>
+          <div class="stats" aria-label="Player statistics">
+            <div class="stat"><div class="stat-val">128</div><div class="stat-label">Games</div></div>
+            <div class="stat"><div class="stat-val">19</div><div class="stat-label">Wins</div></div>
+            <div class="stat"><div class="stat-val">6</div><div class="stat-label">Badges</div></div>
+          </div>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center">Edit profile</button>
+        </div>
+        <div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:12px">Achievements</div>
+          <div class="ach-list">
+            <div class="ach"><div class="ach-icon" aria-hidden="true">1</div><div><div class="ach-name">First win</div><div class="ach-desc">Win a multiplayer match</div></div></div>
+            <div class="ach"><div class="ach-icon" aria-hidden="true">2</div><div><div class="ach-name">Speed run</div><div class="ach-desc">Finish a race under 2 min</div></div></div>
+            <div class="ach"><div class="ach-icon" aria-hidden="true">3</div><div><div class="ach-name">Socialite</div><div class="ach-desc">Play with 10 friends</div></div></div>
+            <div class="ach"><div class="ach-icon" aria-hidden="true" style="opacity:.4">·</div><div><div class="ach-name" style="color:var(--muted)">Locked</div><div class="ach-desc">Reach level 20</div></div></div>
+          </div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:17px;margin:24px 0 12px">Recent activity</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)">
+              <div style="width:32px;height:32px;border-radius:var(--radius);background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:11px;color:var(--text-2)" aria-hidden="true">NK</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:13px">Neon Kart</div><div style="font-size:11px;color:var(--muted)">2nd place · 2h ago</div></div>
+              <div style="font-size:12px;color:var(--accent);font-weight:600">+45 XP</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)">
+              <div style="width:32px;height:32px;border-radius:var(--radius);background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:11px;color:var(--text-2)" aria-hidden="true">BF</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:13px">Block Fortress</div><div style="font-size:11px;color:var(--muted)">Victory · yesterday</div></div>
+              <div style="font-size:12px;color:var(--accent);font-weight:600">+120 XP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="screen" id="screen-settings" aria-labelledby="settings-title">
+      <h1 id="settings-title" style="position:absolute;left:-9999px">Settings</h1>
+      <div style="font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:16px">Settings</div>
+      <div class="settings" style="max-width:640px">
+        <div class="setting">
+          <div><div class="setting-title">Notifications</div><div class="setting-desc">Game invites and lobby updates</div></div>
+          <button class="toggle on" role="switch" aria-checked="true" aria-label="Notifications"></button>
+        </div>
+        <div class="setting">
+          <div><div class="setting-title">Cloud saves</div><div class="setting-desc">Sync progress across devices</div></div>
+          <button class="toggle on" role="switch" aria-checked="true" aria-label="Cloud saves"></button>
+        </div>
+        <div class="setting">
+          <div><div class="setting-title">Voice chat</div><div class="setting-desc">In-game voice communication</div></div>
+          <button class="toggle" role="switch" aria-checked="false" aria-label="Voice chat"></button>
+        </div>
+        <div class="setting">
+          <div><div class="setting-title">Stream quality</div><div class="setting-desc">Video quality for cloud games</div></div>
+          <label class="sr-only" for="sq">Stream quality</label>
+          <select id="sq" class="select"><option>Auto</option><option>1080p</option><option>720p</option></select>
+        </div>
+        <div class="setting">
+          <div><div class="setting-title">Language</div><div class="setting-desc">Display language</div></div>
+          <label class="sr-only" for="lang">Language</label>
+          <select id="lang" class="select"><option>English</option><option>Español</option><option>Deutsch</option></select>
+        </div>
+        <div class="setting">
+          <div><div class="setting-title">Controller vibration</div><div class="setting-desc">Haptic feedback</div></div>
+          <button class="toggle on" role="switch" aria-checked="true" aria-label="Controller vibration"></button>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:8px">
+          <button class="btn btn-primary">Save</button>
+          <button class="btn btn-ghost">Reset</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="assets/qrcode.lib.js"></script>
+<script src="scripts/navigation.js"></script>
+<script src="scripts/lobby.js"></script>
+</body>
+</html>

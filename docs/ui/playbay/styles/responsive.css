@@ -1,0 +1,32 @@
+/* Responsive */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 56px 1fr; }
+  .sidebar { display: none; }
+  .home-grid { grid-template-columns: 1fr; }
+  .home-side { order: 2; }
+  .lobby { grid-template-columns: 1fr; }
+  .profile { grid-template-columns: 1fr; }
+  .main { padding: var(--space-4); }
+}
+
+@media (max-width: 640px) {
+  .topbar { padding: 0 var(--space-3); gap: var(--space-2); }
+  .search { max-width: none; }
+  .search input { height: 32px; }
+  .now { flex-direction: column; align-items: flex-start; }
+  .now-actions { width: 100%; }
+  .now-actions .btn { flex: 1; justify-content: center; }
+  .code-value { font-size: 40px; }
+  .qr { width: 120px; height: 120px; }
+  .library-grid { grid-template-columns: repeat(2, 1fr); }
+  .ach-list { grid-template-columns: 1fr; }
+  .genre-grid { grid-template-columns: repeat(2, 1fr); }
+  .row { gap: var(--space-2); }
+  .game { width: 140px; }
+  .game-thumb { height: 80px; }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .home-grid { grid-template-columns: 1fr 260px; }
+  .code-value { font-size: 48px; }
+}
